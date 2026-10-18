@@ -1,3 +1,12 @@
+// ==== ACME Inc. portfolio ===============================================
+// Project: install_wizard_maker | File: main_test.go
+// About: Tests for package main.
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
 package main
 
 import (
@@ -425,3 +434,5 @@ func TestTakeOverASiblingInstall(t *testing.T) {
 		t.Fatalf("left %v", got)
 	}
 }
+
+// ==== stamp v1 | author=kjFriday | hmac-sha256=eb14eb7ad31c6e387da9df0a14953c33b8ed5dc7f7d8f05387eba3c28defba0b ====

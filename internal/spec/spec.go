@@ -1,3 +1,12 @@
+// ==== ACME Inc. portfolio ===============================================
+// Project: install_wizard_maker | File: internal/spec/spec.go
+// About: Package spec reads and checks setup.json, the description of one install wizard, and...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
 // Package spec reads and checks setup.json, the description of one install wizard, and turns it into
 // the manifest a setup.exe carries.
 //
@@ -485,3 +494,5 @@ func CompareVersions(a, b string) int {
 	}
 	return 0
 }
+
+// ==== stamp v1 | author=kjFriday | hmac-sha256=8872ba4d1789314df15372c76ec72a5d42a05a3b173f6dfb16706783d60be374 ====

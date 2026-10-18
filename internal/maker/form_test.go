@@ -1,3 +1,12 @@
+// ==== ACME Inc. portfolio ===============================================
+// Project: install_wizard_maker | File: internal/maker/form_test.go
+// About: Tests for package maker.
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
 package maker
 
 import (
@@ -67,3 +76,5 @@ func TestRelativize(t *testing.T) {
 		t.Fatalf("%+v", s)
 	}
 }
+
+// ==== stamp v1 | author=kjFriday | hmac-sha256=0a0642f133ad922020abb60c3a27a38cb1f5dab29514c7d2cf22ff185aa2968c ====

@@ -1,3 +1,12 @@
+// ==== ACME Inc. portfolio ===============================================
+// Project: install_wizard_maker | File: internal/wizard/frame_windows.go
+// About: Part of package wizard in install_wizard_maker.
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
 package wizard
 
 import (
@@ -117,3 +126,5 @@ func (f *frame) ask(text string) bool {
 func (f *frame) flags() map[string]bool {
 	return map[string]bool{"next": f.next.Enabled(), "back": f.back.Enabled()}
 }
+
+// ==== stamp v1 | author=kjFriday | hmac-sha256=4102681cb99d72dcd4fa6f1f83349dcbcacbb8ed902b97dcfcf2b380fed2e023 ====

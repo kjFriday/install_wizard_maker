@@ -1,3 +1,12 @@
+// ==== ACME Inc. portfolio ===============================================
+// Project: install_wizard_maker | File: internal/wizard/setup.go
+// About: Package wizard is what a built setup.exe runs (the install wizard) and the uninstall.exe...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
 // Package wizard is what a built setup.exe runs (the install wizard) and the uninstall.exe it leaves
 // behind: their command lines, their windows, and the steps both share.
 package wizard
@@ -271,3 +280,5 @@ func quietSetup(s *Setup, out *sys.Output) int {
 	out.Done(sys.Info)
 	return app.ExitOK
 }
+
+// ==== stamp v1 | author=kjFriday | hmac-sha256=73246cbf0207dcc8fe1412e590260c2f3daccc5ea1ae182ff66ebe6034ae23e3 ====

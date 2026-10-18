@@ -1,3 +1,12 @@
+// ==== ACME Inc. portfolio ===============================================
+// Project: install_wizard_maker | File: internal/wizard/setup_windows.go
+// About: Part of package wizard in install_wizard_maker.
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
 package wizard
 
 import (
@@ -420,3 +429,5 @@ func human(n int64) string {
 	}
 	return fmt.Sprintf("%.1f GB", float64(n)/(1024*1024*1024))
 }
+
+// ==== stamp v1 | author=kjFriday | hmac-sha256=c3e602f245954053d423344a912bc4d1912b8b49119257ef93cc22a133375c23 ====

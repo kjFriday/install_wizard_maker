@@ -1,3 +1,12 @@
+// ==== ACME Inc. portfolio ===============================================
+// Project: install_wizard_maker | File: internal/python/python.go
+// About: Package python finds an installed CPython the way PEP 514 says to: under PythonCore in...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
 // Package python finds an installed CPython the way PEP 514 says to: under PythonCore in the per-user,
 // then the all-users registry, the newest version at or above a minimum, and its pythonw.exe.
 package python
@@ -96,3 +105,5 @@ func parse(s string) ([2]int, bool) {
 }
 
 func less(a, b [2]int) bool { return a[0] < b[0] || (a[0] == b[0] && a[1] < b[1]) }
+
+// ==== stamp v1 | author=kjFriday | hmac-sha256=d7e53a1d58b59a326c6d94086659b8061bff15c08b66d6f2ad8d2d7bf7872ad4 ====

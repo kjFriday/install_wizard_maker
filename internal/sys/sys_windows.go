@@ -1,3 +1,12 @@
+// ==== ACME Inc. portfolio ===============================================
+// Project: install_wizard_maker | File: internal/sys/sys_windows.go
+// About: Package sys holds the small Windows calls every role needs: a safe DLL search path, a...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
 // Package sys holds the small Windows calls every role needs: a safe DLL search path, a console for
 // command-line output, message boxes, and the checks setup runs before it changes anything.
 package sys
@@ -60,3 +69,5 @@ func MessageBox(title, text string, icon uint32) {
 	m, _ := syscall.UTF16PtrFromString(text)
 	procMessageBox.Call(0, uintptr(unsafe.Pointer(m)), uintptr(unsafe.Pointer(t)), uintptr(icon))
 }
+
+// ==== stamp v1 | author=kjFriday | hmac-sha256=cba713227b74c4015c26dbd1641dfde45fc3f381de49491f118223aa177811e8 ====

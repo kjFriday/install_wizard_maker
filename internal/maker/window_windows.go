@@ -1,3 +1,12 @@
+// ==== ACME Inc. portfolio ===============================================
+// Project: install_wizard_maker | File: internal/maker/window_windows.go
+// About: Part of package maker in install_wizard_maker.
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
 package maker
 
 import (
@@ -515,3 +524,5 @@ func (ui *makerUI) helpCommand(id int) {
 		ui.w.MessageBox(app.Name, err.Error(), win.MBIconWarning)
 	}
 }
+
+// ==== stamp v1 | author=kjFriday | hmac-sha256=c5e3ee9a1e33e3a95df128ba65f66993d25799f7d53aa5905a9a99e16ffee266 ====

@@ -1,3 +1,12 @@
+// ==== ACME Inc. portfolio ===============================================
+// Project: install_wizard_maker | File: internal/install/plan.go
+// About: Package install puts a setup's files in place for the current user, and takes them away...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
 // Package install puts a setup's files in place for the current user, and takes them away again.
 //
 // Install is one transaction. Files are unpacked and checked in <dir>\.setup\new; files they replace
@@ -352,3 +361,5 @@ func Existing(reg Registry, pl Places, id, group, name string) (dir string, m *M
 	}
 	return "", nil
 }
+
+// ==== stamp v1 | author=kjFriday | hmac-sha256=b7182ae57fb4a3a03ce8e58340aee15a53e05df0fb285074477b702fc082ffb5 ====

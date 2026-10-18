@@ -1,3 +1,12 @@
+// ==== ACME Inc. portfolio ===============================================
+// Project: install_wizard_maker | File: internal/maker/self_test.go
+// About: Tests for package maker.
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
 package maker
 
 import (
@@ -98,3 +107,5 @@ func tree(t *testing.T, root string) map[string]string {
 	}
 	return files
 }
+
+// ==== stamp v1 | author=kjFriday | hmac-sha256=b71e740e1773d473052364d64c4e35b8bce674963e1bf7b7eb9044332abdb669 ====

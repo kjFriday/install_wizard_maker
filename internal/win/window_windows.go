@@ -1,3 +1,12 @@
+// ==== ACME Inc. portfolio ===============================================
+// Project: install_wizard_maker | File: internal/win/window_windows.go
+// About: Part of package win in install_wizard_maker.
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
 package win
 
 import (
@@ -709,3 +718,5 @@ type MenuItem struct {
 	ID   int
 	Text string
 }
+
+// ==== stamp v1 | author=kjFriday | hmac-sha256=e2e543897e19e9992646d20c514749a5346f28131d493e5c3eff2b70da993cbe ====

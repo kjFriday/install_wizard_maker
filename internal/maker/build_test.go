@@ -1,3 +1,12 @@
+// ==== ACME Inc. portfolio ===============================================
+// Project: install_wizard_maker | File: internal/maker/build_test.go
+// About: Tests for package maker.
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
 package maker
 
 import (
@@ -171,3 +180,5 @@ func TestCommandLine(t *testing.T) {
 		t.Fatalf("-bogus: %d", code)
 	}
 }
+
+// ==== stamp v1 | author=kjFriday | hmac-sha256=5565a5fbf7daca1da92965e27c2f366b5b2e38a3bbabc03dfb54535d44509606 ====

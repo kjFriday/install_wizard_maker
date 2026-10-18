@@ -1,3 +1,12 @@
+// ==== ACME Inc. portfolio ===============================================
+// Project: install_wizard_maker | File: internal/win/api_windows.go
+// About: Package win is a small Win32 toolkit over syscall (no cgo, no libraries): one window...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
 // Package win is a small Win32 toolkit over syscall (no cgo, no libraries): one window class, native
 // controls, Segoe UI fonts, per-monitor DPI scaling, dialog-style keyboard handling, wake-ups from
 // worker goroutines, pixel-art drawing and window captures.
@@ -291,3 +300,5 @@ func instance() uintptr {
 
 func loword(v uintptr) int { return int(uint16(v)) }
 func hiword(v uintptr) int { return int(uint16(v >> 16)) }
+
+// ==== stamp v1 | author=kjFriday | hmac-sha256=2df97e5d13ece29083bc659f8c310d79dd126352937e43ce6016fe1c20d79088 ====

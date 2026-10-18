@@ -1,3 +1,12 @@
+// ==== ACME Inc. portfolio ===============================================
+// Project: install_wizard_maker | File: internal/reg/reg_test.go
+// About: Tests for package reg.
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
 package reg
 
 import (
@@ -101,3 +110,5 @@ func TestHKCURoundTrip(t *testing.T) {
 		t.Fatal("a DWORD read as a string")
 	}
 }
+
+// ==== stamp v1 | author=kjFriday | hmac-sha256=6e1908aca276efb25117b6d6ccdcb629fc6ed13b06d5d7eb1421a5e81fde7c3e ====

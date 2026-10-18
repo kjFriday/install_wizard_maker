@@ -1,3 +1,12 @@
+// ==== ACME Inc. portfolio ===============================================
+// Project: install_wizard_maker | File: internal/wizard/uninstall.go
+// About: Part of package wizard in install_wizard_maker.
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
 package wizard
 
 import (
@@ -147,3 +156,5 @@ func RunUninstall(self string, p *payload.File, args []string) int {
 	RemoveAfterExit(res)
 	return app.ExitOK
 }
+
+// ==== stamp v1 | author=kjFriday | hmac-sha256=dd51e29b5d065ab7f2724e37f466158c0ca5ca0fda28975a47e61b75711b3356 ====

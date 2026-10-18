@@ -1,3 +1,12 @@
+// ==== ACME Inc. portfolio ===============================================
+// Project: install_wizard_maker | File: internal/reg/hkcu_windows.go
+// About: Part of package reg in install_wizard_maker.
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
 package reg
 
 import (
@@ -245,3 +254,5 @@ func utf16Text(b []byte) string {
 	}
 	return syscall.UTF16ToString(u)
 }
+
+// ==== stamp v1 | author=kjFriday | hmac-sha256=b7e3a754228ca729dfec56a7bd0b4827c575cbda4d703f379506a90d02357b40 ====

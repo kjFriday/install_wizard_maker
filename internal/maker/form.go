@@ -1,3 +1,12 @@
+// ==== ACME Inc. portfolio ===============================================
+// Project: install_wizard_maker | File: internal/maker/form.go
+// About: Part of package maker in install_wizard_maker.
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
 package maker
 
 import (
@@ -120,3 +129,5 @@ func RuleText(r spec.FileRule) string {
 	}
 	return r.From + "  →  " + to
 }
+
+// ==== stamp v1 | author=kjFriday | hmac-sha256=5725b10ebb31d375bb163c3f37024d1504ab6dfce704d261782a9c98e890eb0b ====

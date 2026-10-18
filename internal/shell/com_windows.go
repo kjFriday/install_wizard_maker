@@ -1,3 +1,12 @@
+// ==== ACME Inc. portfolio ===============================================
+// Project: install_wizard_maker | File: internal/shell/com_windows.go
+// About: Package shell talks to the Windows shell: known folders, .lnk shortcuts (with the...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
 // Package shell talks to the Windows shell: known folders, .lnk shortcuts (with the taskbar's
 // AppUserModelID), file and folder pickers, and opening files.
 package shell
@@ -130,3 +139,5 @@ func fromTaskMem(p *uint16) string {
 	procCoTaskMemFree.Call(uintptr(unsafe.Pointer(p)))
 	return s
 }
+
+// ==== stamp v1 | author=kjFriday | hmac-sha256=c54ecbe526359cf6913c0ba50ddd6bcc5b3ab4c2c004d2d44b352f5a3c33f52a ====

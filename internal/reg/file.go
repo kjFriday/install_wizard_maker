@@ -1,3 +1,12 @@
+// ==== ACME Inc. portfolio ===============================================
+// Project: install_wizard_maker | File: internal/reg/file.go
+// About: Package reg is the Apps & features entry: the per-user Uninstall key in the real...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
 // Package reg is the Apps & features entry: the per-user Uninstall key in the real registry, or its JSON
 // twin in a -root sandbox. It also reads the keys Python registers (PEP 514).
 package reg
@@ -104,3 +113,5 @@ func (f File) Delete(id string) error {
 	delete(data, f.name(id))
 	return f.save(data)
 }
+
+// ==== stamp v1 | author=kjFriday | hmac-sha256=7edf7504b7bcf5a1a960f3a174167b34d313992e8284adcac51f49dabc9290db ====

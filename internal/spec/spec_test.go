@@ -1,3 +1,12 @@
+// ==== ACME Inc. portfolio ===============================================
+// Project: install_wizard_maker | File: internal/spec/spec_test.go
+// About: Tests for package spec.
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
 package spec
 
 import (
@@ -236,3 +245,5 @@ func TestManifestCheck(t *testing.T) {
 		t.Error("unknown field accepted")
 	}
 }
+
+// ==== stamp v1 | author=kjFriday | hmac-sha256=d1132b85118296e7cca1c42971a1c93c0bd9de88dd0150f886ef58ec19fcd251 ====

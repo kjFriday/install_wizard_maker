@@ -1,3 +1,12 @@
+// ==== ACME Inc. portfolio ===============================================
+// Project: install_wizard_maker | File: internal/install/plan_test.go
+// About: Tests for package install.
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
 package install
 
 import (
@@ -233,3 +242,5 @@ func TestQuoteArg(t *testing.T) {
 		}
 	}
 }
+
+// ==== stamp v1 | author=kjFriday | hmac-sha256=e16227956452865f8dbdd3492a455bf16fe8b7072603566eda853edaa097ef1e ====

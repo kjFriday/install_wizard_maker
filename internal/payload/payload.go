@@ -1,3 +1,12 @@
+// ==== ACME Inc. portfolio ===============================================
+// Project: install_wizard_maker | File: internal/payload/payload.go
+// About: Package payload is the part of a setup.exe after the program itself: a zip of everything...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
 // Package payload is the part of a setup.exe after the program itself: a zip of everything to install
 // and a 32-byte trailer saying where the zip starts and what the exe is for.
 //
@@ -293,3 +302,5 @@ func (p *File) StubBytes() ([]byte, error) {
 	_, err := p.f.ReadAt(b, 0)
 	return b, err
 }
+
+// ==== stamp v1 | author=kjFriday | hmac-sha256=15fd2657d701deb059e031aa3293ca146a78c88a1942e7c13ce6e40f37df8ebb ====

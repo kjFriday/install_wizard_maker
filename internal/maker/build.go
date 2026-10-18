@@ -1,3 +1,12 @@
+// ==== ACME Inc. portfolio ===============================================
+// Project: install_wizard_maker | File: internal/maker/build.go
+// About: Package maker is the wizard maker itself: Build turns a spec into a setup.exe, Main is...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
 // Package maker is the wizard maker itself: Build turns a spec into a setup.exe, Main is its command
 // line and window.
 package maker
@@ -228,3 +237,5 @@ func human(n int64) string {
 	}
 	return fmt.Sprintf("%.1f MB", float64(n)/(1024*1024))
 }
+
+// ==== stamp v1 | author=kjFriday | hmac-sha256=0f8aa7b936d87bbdeafb077b0fdadaf0c997604cd5aa3ae5add0c3628bfe2b98 ====

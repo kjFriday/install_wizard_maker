@@ -1,3 +1,12 @@
+// ==== ACME Inc. portfolio ===============================================
+// Project: install_wizard_maker | File: internal/wizard/uninstall_windows.go
+// About: Part of package wizard in install_wizard_maker.
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
 package wizard
 
 import (
@@ -194,3 +203,5 @@ func (ui *uninstallUI) smoke(file string) {
 	ui.w.Close()
 	s.Write(ui.code)
 }
+
+// ==== stamp v1 | author=kjFriday | hmac-sha256=235105db1a191bbedc34e7a9522b5ba81d0af14ba693461583b0f0285c6ac1e2 ====

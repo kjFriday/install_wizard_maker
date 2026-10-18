@@ -1,3 +1,12 @@
+// ==== ACME Inc. portfolio ===============================================
+// Project: install_wizard_maker | File: internal/maker/cli.go
+// About: Part of package maker in install_wizard_maker.
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
 package maker
 
 import (
@@ -135,3 +144,5 @@ func aliasQuiet(args []string) []string {
 	}
 	return out
 }
+
+// ==== stamp v1 | author=kjFriday | hmac-sha256=4d9a8286e3ab5880f5f8350b587666f2c2f4d2f453fc8fbdb50d217fccdaa5d0 ====

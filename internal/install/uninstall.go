@@ -1,3 +1,12 @@
+// ==== ACME Inc. portfolio ===============================================
+// Project: install_wizard_maker | File: internal/install/uninstall.go
+// About: Part of package install in install_wizard_maker.
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
 package install
 
 import (
@@ -142,3 +151,5 @@ func DeleteAfterExit(file string, dirs ...string) error {
 	cmd.Dir = os.TempDir() // not the folder being removed
 	return cmd.Start()
 }
+
+// ==== stamp v1 | author=kjFriday | hmac-sha256=84cdc6844e38945f17d4869e8fb6232aeb92669aa114eb7d3702aa2b17aa3303 ====

@@ -1,3 +1,12 @@
+// ==== ACME Inc. portfolio ===============================================
+// Project: install_wizard_maker | File: internal/install/registry.go
+// About: Part of package install in install_wizard_maker.
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
 package install
 
 // Registry value types setup writes (anything else is kept as raw bytes when read).
@@ -42,3 +51,5 @@ type Registry interface {
 
 // UninstallKey is the key under HKEY_CURRENT_USER where id's entry lives.
 func UninstallKey(id string) string { return uninstallKey + `\` + id }
+
+// ==== stamp v1 | author=kjFriday | hmac-sha256=e15157394251826ace32615e3a5d9efe0e5dd1d5e87d48c86f39c29dd63f396f ====

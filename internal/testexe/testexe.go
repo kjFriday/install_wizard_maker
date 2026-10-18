@@ -1,3 +1,12 @@
+// ==== ACME Inc. portfolio ===============================================
+// Project: install_wizard_maker | File: internal/testexe/testexe.go
+// About: Package testexe builds the wizard maker once for a test binary, as released (-trimpath...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
 // Package testexe builds the wizard maker once for a test binary, as released (-trimpath, windowsgui,
 // stripped), for tests that need a real exe: the program part of every setup.exe.
 package testexe
@@ -79,3 +88,5 @@ func moduleRoot() string {
 	out, _ := exec.Command("go", "env", "GOMOD").Output()
 	return filepath.Dir(strings.TrimSpace(string(out)))
 }
+
+// ==== stamp v1 | author=kjFriday | hmac-sha256=eabcfd39946ee3fb9d56d879d55d2ef24bf19b8bd9a0265a3c6bd9f581b505aa ====

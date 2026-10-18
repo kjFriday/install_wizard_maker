@@ -1,3 +1,12 @@
+// ==== ACME Inc. portfolio ===============================================
+// Project: install_wizard_maker | File: internal/winres/winres.go
+// About: Package winres reads and writes Windows resources: .ico files, icon groups, version info...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
 // Package winres reads and writes Windows resources: .ico files, icon groups, version info, and the
 // resource section of a PE file, all in pure Go so a setup.exe is the same bytes on every machine.
 package winres
@@ -356,3 +365,5 @@ func ICOFromResources(res []Resource) ([]byte, error) {
 	}
 	return EncodeICO(images), nil
 }
+
+// ==== stamp v1 | author=kjFriday | hmac-sha256=fb7bbb2c3800a9bb22b89b4c2ab318aacb0f801dff384b73333e6ecd6206895d ====

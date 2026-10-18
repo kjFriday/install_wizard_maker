@@ -1,3 +1,12 @@
+// ==== ACME Inc. portfolio ===============================================
+// Project: install_wizard_maker | File: internal/app/app.go
+// About: Package app is the wizard maker's identity (name, id, version, credit) and the exit codes...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
 // Package app is the wizard maker's identity (name, id, version, credit) and the exit codes every role
 // shares.
 package app
@@ -22,3 +31,5 @@ const (
 	ExitCancelled = 3 // the user cancelled
 	ExitRefused   = 4 // refused: downgrade, foreign folder, file in use, elevated, Python missing
 )
+
+// ==== stamp v1 | author=kjFriday | hmac-sha256=25bba9e908b096686306b5c012fcc56008fbe69985aa25cd0a457e5824ec5157 ====

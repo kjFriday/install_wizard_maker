@@ -1,3 +1,12 @@
+// ==== ACME Inc. portfolio ===============================================
+// Project: install_wizard_maker | File: internal/shell/shell_test.go
+// About: Tests for package shell.
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
 package shell
 
 import (
@@ -60,3 +69,5 @@ func TestShortcutRoundTrip(t *testing.T) {
 		t.Fatalf("unexpected id %q", got.AppUserModelID)
 	}
 }
+
+// ==== stamp v1 | author=kjFriday | hmac-sha256=28132eb5f3d488ec23709bb858d353d98633f35ad28013eb954061d7ed8017bf ====
