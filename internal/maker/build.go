@@ -93,7 +93,7 @@ func Build(s *spec.Spec, stub []byte, logf func(format string, a ...any)) (Resul
 		}
 		return io.NopCloser(bytes.NewReader(manifest.JSON())), nil
 	}})
-	logf("Packing %d files (%s)…", len(src), human(total))
+	logf("Packing %s (%s)…", count(len(src), "file"), human(total))
 	w := bufio.NewWriterSize(tmp, 1<<20)
 	h := sha256.New()
 	err = payload.Write(io.MultiWriter(w, h), prog, payload.Setup, entries)
@@ -208,6 +208,14 @@ func (h *hashReader) Read(p []byte) (int, error) {
 func (h *hashReader) Close() error {
 	h.done(h.n, hex.EncodeToString(h.h.Sum(nil)))
 	return h.r.Close()
+}
+
+// count is "1 file", "3 files".
+func count(n int, noun string) string {
+	if n == 1 {
+		return "1 " + noun
+	}
+	return fmt.Sprintf("%d %ss", n, noun)
 }
 
 // human is a size for people: 512 bytes, 3.4 KB, 12.0 MB.

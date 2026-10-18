@@ -456,7 +456,7 @@ func (ui *makerUI) wake() {
 			ui.logText.WriteString("Build failed: " + err.Error() + "\n")
 		default:
 			ui.lastBuilt = res.Path
-			ui.logText.WriteString(fmt.Sprintf("Done: %d files in %s. Build > Run the last setup.exe tries it.\n", res.Files, filepath.Base(res.Path)))
+			ui.logText.WriteString(fmt.Sprintf("Done: %s in %s. Build > Run the last setup.exe tries it.\n", count(res.Files, "file"), filepath.Base(res.Path)))
 		}
 	}
 	ui.log.SetText(ui.logText.String())
