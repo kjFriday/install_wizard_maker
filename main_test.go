@@ -287,6 +287,37 @@ func TestWizardWindows(t *testing.T) {
 	}
 }
 
+// A Python program's shortcut runs the newest registered CPython that is new enough.
+func TestPythonProgram(t *testing.T) {
+	fixture := testexe.Fixture(t)
+	python := func(min string) func(map[string]any) {
+		return func(s map[string]any) {
+			s["run"] = map[string]any{"program": "{python}", "args": []string{`{app}\main.py`}}
+			s["requires"] = map[string]any{"python": min}
+		}
+	}
+	root := filepath.Join(t.TempDir(), "root")
+	if out, code := runExe(t, build(t, fixture, python("3.99")), "-quiet", "-root", root); code != 4 || !strings.Contains(out, "Python 3.99") {
+		t.Fatalf("no such Python: %d %s", code, out)
+	}
+	out, code := runExe(t, build(t, fixture, python("3.0")), "-quiet", "-root", root)
+	if code == 4 && strings.Contains(out, "Python") {
+		t.Skip("no Python registered on this computer")
+	}
+	if code != 0 {
+		t.Fatalf("%d %s", code, out)
+	}
+	pl := install.SandboxPlaces(root)
+	dir := pl.Dir("ACME Inc", "ACME Wizard Fixture")
+	link, err := shell.ReadLink(pl.StartMenuLink("ACME Inc", "ACME Wizard Fixture"))
+	if err != nil || !strings.EqualFold(filepath.Base(link.Target), "pythonw.exe") || link.Args != `"`+filepath.Join(dir, "main.py")+`"` {
+		t.Fatalf("%+v %v", link, err)
+	}
+	if _, err := os.Stat(link.Target); err != nil {
+		t.Fatal(err)
+	}
+}
+
 // The maker's window opens a setup.json and builds it.
 func TestMakerWindow(t *testing.T) {
 	fixture := testexe.Fixture(t)
