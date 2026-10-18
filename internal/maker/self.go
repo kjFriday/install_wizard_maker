@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"acme/wizard/icon"
 	"acme/wizard/internal/app"
@@ -70,8 +71,10 @@ func installSelf(self string, args []string, printf func(string, ...any)) int {
 	return runAndWait(setup, args, printf)
 }
 
-// uninstallSelf runs the uninstaller of the installed maker with args, waiting for it.
-func uninstallSelf(root string, args []string, printf func(string, ...any)) int {
+// uninstallSelf runs the uninstaller of the installed maker with args, waiting for it. It refuses when
+// self runs from the install folder: Windows will not delete a running exe, so the uninstall would stop
+// half-way.
+func uninstallSelf(self, root string, args []string, printf func(string, ...any)) int {
 	dir, err := installedDir(root)
 	if err != nil {
 		printf("%v", err)
@@ -81,7 +84,24 @@ func uninstallSelf(root string, args []string, printf func(string, ...any)) int 
 		printf("%s is not installed for you.", app.Name)
 		return app.ExitOK
 	}
-	return runAndWait(filepath.Join(dir, install.UninstallerName), args, printf)
+	uninstaller := filepath.Join(dir, install.UninstallerName)
+	if runsFrom(self, dir) {
+		printf("This copy runs from %s, which its uninstaller removes: uninstall %s from Apps & features, or run %s.",
+			dir, app.Name, uninstaller)
+		return app.ExitRefused
+	}
+	return runAndWait(uninstaller, args, printf)
+}
+
+// runsFrom reports whether the exe self lies in dir or a folder under it.
+func runsFrom(self, dir string) bool {
+	a, err1 := filepath.Abs(self)
+	b, err2 := filepath.Abs(dir)
+	if err1 != nil || err2 != nil {
+		return false
+	}
+	rel, err := filepath.Rel(strings.ToLower(b), strings.ToLower(a))
+	return err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))
 }
 
 // installedDir is where the maker is installed ("" if it is not), in the -root sandbox if root is set.

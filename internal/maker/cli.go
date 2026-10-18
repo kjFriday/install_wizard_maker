@@ -73,7 +73,7 @@ func Main(self string, args []string) int {
 		if *purge {
 			flags = append(flags, "-purge")
 		}
-		code := uninstallSelf(*root, pass(flags...), o.Printf)
+		code := uninstallSelf(self, *root, pass(flags...), o.Printf)
 		o.Done(sys.Info)
 		return code
 	}
