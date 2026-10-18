@@ -1,0 +1,16 @@
+{
+  "id": "ACME.Wizard",
+  "name": "ACME Wizard Maker",
+  "version": "0.1.0",
+  "publisher": "ACME Inc. (fictional)",
+  "group": "ACME Inc",
+  "icon": "icon/app.ico",
+  "license": "LICENSE",
+  "files": [
+    {"from": "wizard-maker.exe"}
+  ],
+  "run": {"program": "wizard-maker.exe"},
+  "askFolder": true,
+  "shortcuts": {"ask": true, "startMenu": true, "desktop": false},
+  "output": "dist/{name}-{version}-setup.exe"
+}

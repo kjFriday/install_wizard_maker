@@ -57,6 +57,8 @@ const (
 	idExit
 	idRunSetup
 	idAbout
+	idInstallSelf
+	idUninstallSelf
 )
 
 var jsonFilter = []shell.Filter{{Name: "setup.json", Pattern: "*.json"}, {Name: "All files", Pattern: "*.*"}}
@@ -486,7 +488,21 @@ func about() string {
 }
 
 // helpItems are the Help menu's entries.
-func helpItems() []win.MenuItem { return []win.MenuItem{{ID: idAbout, Text: "&About"}} }
+func helpItems() []win.MenuItem {
+	return []win.MenuItem{{ID: idInstallSelf, Text: "&Install for this user…"}, {ID: idUninstallSelf, Text: "&Uninstall…"}, {},
+		{ID: idAbout, Text: "&About"}}
+}
 
-// helpCommand handles the Help menu's other entries.
-func (ui *makerUI) helpCommand(id int) {}
+// helpCommand handles the Help menu's install entries: each starts its own window.
+func (ui *makerUI) helpCommand(id int) {
+	var err error
+	switch id {
+	case idInstallSelf:
+		err = startSelfSetup(ui.self)
+	case idUninstallSelf:
+		err = startUninstaller()
+	}
+	if err != nil {
+		ui.w.MessageBox(app.Name, err.Error(), win.MBIconWarning)
+	}
+}

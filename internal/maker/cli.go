@@ -17,6 +17,8 @@ import (
 const usage = `Usage:
   wizard-maker.exe [setup.json]                             open the window
   wizard-maker.exe build [-o out.exe] [-quiet] setup.json   make the setup.exe setup.json describes
+  wizard-maker.exe -install [-desktop-shortcut] [-quiet] [-root DIR]   install for this user
+  wizard-maker.exe -uninstall [-purge] [-quiet] [-root DIR]           uninstall
   wizard-maker.exe -version                                 print the version
   wizard-maker.exe -smoke FILE [setup.json]                 open, build, capture, report to FILE, close`
 
@@ -29,8 +31,23 @@ func Main(self string, args []string) int {
 	fs.SetOutput(io.Discard)
 	version := fs.Bool("version", false, "print the version")
 	smoke := fs.String("smoke", "", "open the window, build, write a report to this file, close")
-	err := fs.Parse(args)
-	o, _ := sys.NewOutput(app.Name, false, "")
+	inst := fs.Bool("install", false, "install for this user (Start menu, Apps & features)")
+	uninst := fs.Bool("uninstall", false, "uninstall")
+	desktop := fs.Bool("desktop-shortcut", false, "with -install: add a desktop shortcut")
+	purge := fs.Bool("purge", false, "with -uninstall: also remove the maker's settings")
+	quiet := fs.Bool("quiet", false, "no window or message box")
+	root := fs.String("root", "", "sandbox: install under this folder (registry goes to registry.json)")
+	err := fs.Parse(aliasQuiet(args))
+	o, _ := sys.NewOutput(app.Name, *quiet, "")
+	pass := func(flags ...string) []string { // the flags the setup or uninstaller gets too
+		if *quiet {
+			flags = append(flags, "-quiet")
+		}
+		if *root != "" {
+			flags = append(flags, "-root", *root)
+		}
+		return flags
+	}
 	switch {
 	case err != nil || fs.NArg() > 1:
 		if err == nil {
@@ -43,6 +60,22 @@ func Main(self string, args []string) int {
 		o.Printf("%s %s", app.Name, app.Version)
 		o.Done(sys.Info)
 		return app.ExitOK
+	case *inst:
+		var flags []string
+		if *desktop {
+			flags = append(flags, "-desktop-shortcut")
+		}
+		code := installSelf(self, pass(flags...), o.Printf)
+		o.Done(sys.Info)
+		return code
+	case *uninst:
+		var flags []string
+		if *purge {
+			flags = append(flags, "-purge")
+		}
+		code := uninstallSelf(*root, pass(flags...), o.Printf)
+		o.Done(sys.Info)
+		return code
 	}
 	return Window(self, fs.Arg(0), *smoke)
 }
@@ -89,4 +122,16 @@ func buildCommand(self string, args []string) int {
 	}
 	o.Done(sys.Info)
 	return app.ExitOK
+}
+
+// aliasQuiet accepts /S for -quiet, as the setup and uninstaller do.
+func aliasQuiet(args []string) []string {
+	out := make([]string, len(args))
+	for i, a := range args {
+		if strings.EqualFold(a, "/S") {
+			a = "-quiet"
+		}
+		out[i] = a
+	}
+	return out
 }

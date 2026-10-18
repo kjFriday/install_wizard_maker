@@ -6,6 +6,7 @@
 package main
 
 import (
+	_ "embed"
 	"os"
 	"runtime"
 	"strings"
@@ -17,9 +18,13 @@ import (
 	"acme/wizard/internal/wizard"
 )
 
+//go:embed LICENSE
+var license string
+
 func init() {
 	// Win32 windows and COM objects belong to the thread that made them.
 	runtime.LockOSThread()
+	maker.License = license
 }
 
 func main() {

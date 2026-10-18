@@ -12,8 +12,11 @@ import (
 	"testing"
 	"time"
 
+	"acme/wizard/internal/app"
 	"acme/wizard/internal/install"
+	"acme/wizard/internal/maker"
 	"acme/wizard/internal/shell"
+	"acme/wizard/internal/spec"
 	"acme/wizard/internal/testexe"
 )
 
@@ -315,6 +318,51 @@ func TestPythonProgram(t *testing.T) {
 	}
 	if _, err := os.Stat(link.Target); err != nil {
 		t.Fatal(err)
+	}
+}
+
+// The repository's setup.json describes the same program the maker installs itself as.
+func TestOwnSetupJSON(t *testing.T) {
+	s, err := spec.Load("setup.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	self, err := maker.SelfSpec(os.Args[0], t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s.ID != app.ID || s.Name != app.Name || s.Version != app.Version || s.Publisher != app.Publisher || s.Group != app.Group ||
+		s.Run.Program != app.ExeName || !reflect.DeepEqual(s.Files, self.Files) || !reflect.DeepEqual(s.Run, self.Run) || s.Shortcuts != self.Shortcuts {
+		t.Fatalf("setup.json %+v\nself %+v", s, self)
+	}
+	if s.Icon != "icon/app.ico" || s.License != "LICENSE" {
+		t.Fatalf("icon %q license %q", s.Icon, s.License)
+	}
+}
+
+// The maker installs and uninstalls itself (rule 18): -install builds its own setup.exe and runs it.
+func TestInstallSelf(t *testing.T) {
+	root := filepath.Join(t.TempDir(), "root")
+	exe := testexe.Maker(t)
+	if out, code := runExe(t, exe, "-install", "-quiet", "-root", root); code != 0 {
+		t.Fatalf("install: %d %s", code, out)
+	}
+	dir := install.SandboxPlaces(root).Dir(app.Group, app.Name)
+	m, err := install.ReadMarker(dir)
+	if err != nil || m == nil || m.AppID != app.ID || m.Version != app.Version {
+		t.Fatalf("marker %+v %v", m, err)
+	}
+	if out, code := runExe(t, filepath.Join(dir, app.ExeName), "-version"); code != 0 || !strings.Contains(out, app.Version) {
+		t.Fatalf("installed maker: %d %s", code, out)
+	}
+	if v := registry(t, root)[`HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\`+app.ID]; v["DisplayName"] != app.Name+" "+app.Version {
+		t.Fatalf("registry %v", v)
+	}
+	if out, code := runExe(t, exe, "-uninstall", "-quiet", "-root", root); code != 0 {
+		t.Fatalf("uninstall: %d %s", code, out)
+	}
+	if !gone(dir, 15*time.Second) {
+		t.Fatalf("left %v", files(t, dir))
 	}
 }
 
