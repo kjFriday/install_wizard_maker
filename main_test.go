@@ -191,6 +191,102 @@ func TestUpgradeDowngradeAndRefusals(t *testing.T) {
 	}
 }
 
+type smokeReport struct {
+	Role    string `json:"role"`
+	IconSet bool   `json:"iconSet"`
+	Client  [2]int `json:"client"`
+	Exit    int    `json:"exit"`
+	Panic   string `json:"panic"`
+	Pages   []struct {
+		Name     string `json:"name"`
+		PNG      string `json:"png"`
+		Next     bool   `json:"next"`
+		Error    string `json:"error"`
+		Controls []struct {
+			Class         string `json:"class"`
+			Text          string `json:"text"`
+			X, Y, W, H    int
+			Visible, Fits bool
+		} `json:"controls"`
+	} `json:"pages"`
+}
+
+// checkSmoke reads a -smoke report and checks every page: captured, in order, and every visible
+// control inside the window, clear of the others, its text fitting.
+func checkSmoke(t *testing.T, file string, pages []string) smokeReport {
+	t.Helper()
+	var r smokeReport
+	b, err := os.ReadFile(file)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal(b, &r); err != nil {
+		t.Fatal(err)
+	}
+	if r.Panic != "" || !r.IconSet {
+		t.Fatalf("%s: panic %q, icon set %v", r.Role, r.Panic, r.IconSet)
+	}
+	var names []string
+	for _, p := range r.Pages {
+		names = append(names, p.Name)
+		if p.PNG == "" {
+			t.Errorf("%s/%s: no capture: %s", r.Role, p.Name, p.Error)
+		} else if _, err := os.Stat(filepath.Join(filepath.Dir(file), p.PNG)); err != nil {
+			t.Errorf("%s/%s: %v", r.Role, p.Name, err)
+		}
+		var shown []int
+		for i, c := range p.Controls {
+			if !c.Visible {
+				continue
+			}
+			if c.X < 0 || c.Y < 0 || c.X+c.W > r.Client[0] || c.Y+c.H > r.Client[1] {
+				t.Errorf("%s/%s: %s %q outside the window", r.Role, p.Name, c.Class, c.Text)
+			}
+			if !c.Fits {
+				t.Errorf("%s/%s: %s %q does not fit its %dx%d box", r.Role, p.Name, c.Class, c.Text, c.W, c.H)
+			}
+			for _, j := range shown {
+				o := p.Controls[j]
+				if c.X < o.X+o.W && o.X < c.X+c.W && c.Y < o.Y+o.H && o.Y < c.Y+c.H {
+					t.Errorf("%s/%s: %q overlaps %q", r.Role, p.Name, c.Text, o.Text)
+				}
+			}
+			shown = append(shown, i)
+		}
+	}
+	if !reflect.DeepEqual(names, pages) {
+		t.Fatalf("%s pages %v, want %v", r.Role, names, pages)
+	}
+	return r
+}
+
+// The windows, walked page by page as a user would (-smoke), install and uninstall for real.
+func TestWizardWindows(t *testing.T) {
+	fixture := testexe.Fixture(t)
+	setup := build(t, fixture, nil)
+	root := filepath.Join(t.TempDir(), "root")
+	shots := filepath.Join(t.TempDir(), "shots")
+	if out, code := runExe(t, setup, "-smoke", filepath.Join(shots, "setup.json"), "-root", root); code != 0 {
+		t.Fatalf("setup smoke: %d %s", code, out)
+	}
+	r := checkSmoke(t, filepath.Join(shots, "setup.json"), []string{"welcome", "license", "license-accepted", "folder", "shortcuts", "progress", "finish"})
+	if r.Pages[1].Next || !r.Pages[2].Next {
+		t.Fatal("Next should wait for the license to be accepted")
+	}
+	dir := install.SandboxPlaces(root).Dir("ACME Inc", "ACME Wizard Fixture")
+	uninstall := filepath.Join(dir, "uninstall.exe")
+	if _, err := os.Stat(uninstall); err != nil {
+		t.Fatalf("not installed: %v", err)
+	}
+	if out, code := runExe(t, uninstall, "-smoke", filepath.Join(shots, "uninstall.json"), "-root", root); code != 0 {
+		t.Fatalf("uninstall smoke: %d %s", code, out)
+	}
+	checkSmoke(t, filepath.Join(shots, "uninstall.json"), []string{"confirm", "removing", "done"})
+	if !gone(dir, 15*time.Second) {
+		t.Fatalf("left %v", files(t, dir))
+	}
+}
+
 // An install made by a program's own -install (the other ACME programs) is taken over cleanly.
 func TestTakeOverASiblingInstall(t *testing.T) {
 	fixture := testexe.Fixture(t)

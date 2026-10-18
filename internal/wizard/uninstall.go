@@ -89,8 +89,8 @@ func (u *Uninstaller) Remove(purge bool, progress func(done, total int64, file s
 		Purge: purge, Progress: progress})
 }
 
-// Finish starts the removal of the uninstaller itself and its folders, once this process has exited.
-func Finish(res install.Result) {
+// RemoveAfterExit starts the removal of the uninstaller itself and its folders, once this process has exited.
+func RemoveAfterExit(res install.Result) {
 	if len(res.AfterExit) > 0 {
 		install.DeleteAfterExit(res.AfterExit[0], res.AfterExit[1:]...)
 	}
@@ -144,6 +144,6 @@ func RunUninstall(self string, p *payload.File, args []string) int {
 	}
 	out.Done(sys.Info)
 	release()
-	Finish(res)
+	RemoveAfterExit(res)
 	return app.ExitOK
 }

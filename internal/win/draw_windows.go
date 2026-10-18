@@ -135,7 +135,9 @@ func (w *Window) Capture() (*image.RGBA, error) {
 	bmp, _, _ := procCreateCompatibleBitmap.Call(dc, uintptr(width), uintptr(height))
 	defer procDeleteObject.Call(bmp)
 	old, _, _ := procSelectObject.Call(mem, bmp)
-	ok, _, err := procPrintWindow.Call(w.HWND, mem, 2) // PW_RENDERFULLCONTENT
+	// flags 0: the window paints itself into our bitmap now (WM_PRINT), so the capture is never a
+	// frame behind, as a copy of the composed window can be
+	ok, _, err := procPrintWindow.Call(w.HWND, mem, 0)
 	procSelectObject.Call(mem, old)
 	if ok == 0 {
 		return nil, err
@@ -190,7 +192,7 @@ func (w *Window) ClientSize() (int, int) {
 // their width.
 func (c *Control) fits() bool {
 	text := c.TextValue()
-	if text == "" || (c.Class != "STATIC" && c.Class != "BUTTON") || c.style&ssEtchedHorz == ssEtchedHorz && c.Class == "STATIC" {
+	if text == "" || (c.Class != "STATIC" && c.Class != "BUTTON") || c.Class == "STATIC" && c.style&(ssEtchedHorz|ssPathEllipsis) != 0 {
 		return true
 	}
 	w := c.w

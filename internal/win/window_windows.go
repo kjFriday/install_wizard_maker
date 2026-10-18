@@ -503,6 +503,11 @@ func (w *Window) Label(text string, r Rect, f Font, look Look) *Control {
 	return w.Add("STATIC", text, ssLeft|ssNoPrefix, 0, 0, r, f, look)
 }
 
+// PathLabel is one line holding a path; a path too long for it loses its middle (C:\Users\…\App).
+func (w *Window) PathLabel(text string, r Rect, look Look) *Control {
+	return w.Add("STATIC", text, ssLeftNoWrap|ssPathEllipsis|ssNoPrefix, 0, 0, r, Normal, look)
+}
+
 // Caption is static text with an & mnemonic for the control after it (a field's label).
 func (w *Window) Caption(text string, r Rect, look Look) *Control {
 	return w.Add("STATIC", text, ssLeftNoWrap, 0, 0, r, Normal, look)

@@ -139,6 +139,7 @@ const (
 	ssEtchedHorz    = 0x0010
 	ssLeftNoWrap    = 0x000C
 	ssEndEllipsis   = 0x4000
+	ssPathEllipsis  = 0x8000
 	bsPushButton    = 0x0000
 	bsDefPushButton = 0x0001
 	bsAutoCheckBox  = 0x0003

@@ -125,6 +125,9 @@ func (o *Output) Done(icon uint32) {
 	}
 }
 
+// SetQuiet turns the final message box off (a window shows the outcome instead).
+func (o *Output) SetQuiet(q bool) { o.quiet = q }
+
 // SetTitle changes the message box's title.
 func (o *Output) SetTitle(title string) { o.title = title }
 
