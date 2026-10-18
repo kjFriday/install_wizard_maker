@@ -493,14 +493,23 @@ func helpItems() []win.MenuItem {
 		{ID: idAbout, Text: "&About"}}
 }
 
-// helpCommand handles the Help menu's install entries: each starts its own window.
+// helpCommand handles the Help menu's install entries: each starts its own window. Uninstalling the
+// copy this window runs from closes the window (asking about unsaved changes first), so the uninstaller
+// can remove its exe.
 func (ui *makerUI) helpCommand(id int) {
 	var err error
 	switch id {
 	case idInstallSelf:
 		err = startSelfSetup(ui.self)
 	case idUninstallSelf:
-		err = startUninstaller()
+		var exe string
+		var inside bool
+		if exe, inside, err = selfUninstaller(ui.self, ""); err != nil || (inside && !ui.closing()) {
+			break
+		}
+		if err = startUninstaller(exe); err == nil && inside {
+			ui.w.Close()
+		}
 	}
 	if err != nil {
 		ui.w.MessageBox(app.Name, err.Error(), win.MBIconWarning)

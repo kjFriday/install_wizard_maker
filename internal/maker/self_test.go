@@ -44,6 +44,15 @@ func TestUninstallSelf(t *testing.T) {
 		}
 	}
 
+	// Help > Uninstall: the installed copy must close for its uninstaller to finish; another need not
+	uninstaller := filepath.Join(dir, install.UninstallerName)
+	for self, wantInside := range map[string]bool{installed: true, filepath.Join(root, app.ExeName): false} {
+		exe, inside, err := selfUninstaller(self, root)
+		if err != nil || exe != uninstaller || inside != wantInside {
+			t.Fatalf("selfUninstaller(%s) = %s %v %v", self, exe, inside, err)
+		}
+	}
+
 	cmd := exec.Command(installed, "-uninstall", "-quiet", "-root", root)
 	cmd.Dir = root
 	out, err := cmd.CombinedOutput()
@@ -66,6 +75,9 @@ func TestUninstallSelf(t *testing.T) {
 	}
 	if _, err := os.Stat(installed); !os.IsNotExist(err) {
 		t.Fatalf("still installed: %v", err)
+	}
+	if _, _, err := selfUninstaller(installed, root); err == nil {
+		t.Fatal("selfUninstaller found an uninstalled maker")
 	}
 }
 

@@ -2,12 +2,14 @@ package install
 
 import (
 	"errors"
+	"fmt"
 	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"syscall"
+	"time"
 
 	"acme/wizard/internal/spec"
 )
@@ -61,8 +63,8 @@ func Uninstall(dir string, m *Marker, env UEnv) (Result, error) {
 			res.Kept = append(res.Kept, e)
 			continue
 		}
-		if err := os.Remove(path); err != nil {
-			return res, err
+		if err := removeWait(path); err != nil {
+			return res, fmt.Errorf("%w; close it and run the uninstaller again", err)
 		}
 		removeEmptyParents(path, dir)
 	}
@@ -98,6 +100,25 @@ func Uninstall(dir string, m *Marker, env UEnv) (Result, error) {
 		env.Progress(int64(len(m.Files)), int64(len(m.Files)), "")
 	}
 	return res, nil
+}
+
+// lockWait is how long removeWait retries a file that is in use.
+var lockWait = 10 * time.Second
+
+// removeWait removes path, retrying while it is in use: a program that started its uninstaller and is
+// closing (the wizard maker's Help > Uninstall) still holds its exe for a moment.
+func removeWait(path string) error {
+	deadline := time.Now().Add(lockWait)
+	for {
+		err := os.Remove(path)
+		if err == nil || errors.Is(err, fs.ErrNotExist) {
+			return nil
+		}
+		if !time.Now().Before(deadline) {
+			return err
+		}
+		time.Sleep(200 * time.Millisecond)
+	}
 }
 
 // DeleteAfterExit starts a hidden cmd that waits for this process to end, deletes file, then removes

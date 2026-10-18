@@ -157,14 +157,20 @@ func startSelfSetup(self string) error {
 	return nil
 }
 
-// startUninstaller starts the installed maker's uninstaller without waiting.
-func startUninstaller() error {
-	dir, err := installedDir("")
+// selfUninstaller is the installed maker's uninstall.exe (in the -root sandbox if root is set); inside
+// reports whether self runs from that install, so the caller must exit for the uninstall to finish.
+func selfUninstaller(self, root string) (exe string, inside bool, err error) {
+	dir, err := installedDir(root)
 	if err != nil {
-		return err
+		return "", false, err
 	}
 	if dir == "" {
-		return fmt.Errorf("%s is not installed for you", app.Name)
+		return "", false, fmt.Errorf("%s is not installed for you", app.Name)
 	}
-	return exec.Command(filepath.Join(dir, install.UninstallerName)).Start()
+	return filepath.Join(dir, install.UninstallerName), runsFrom(self, dir), nil
+}
+
+// startUninstaller starts uninstall.exe without waiting.
+func startUninstaller(exe string) error {
+	return exec.Command(exe).Start()
 }

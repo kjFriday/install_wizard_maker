@@ -88,6 +88,36 @@ func TestUninstallTouchesOnlyItsOwn(t *testing.T) {
 	}
 }
 
+// A file in use is retried until it is free, and only then reported.
+func TestRemoveWait(t *testing.T) {
+	defer func(d time.Duration) { lockWait = d }(lockWait)
+	file := filepath.Join(t.TempDir(), "wizard-maker.exe")
+	os.WriteFile(file, []byte("x"), 0o644)
+	f, err := os.Open(file) // held without delete sharing, as a running exe is
+	if err != nil {
+		t.Fatal(err)
+	}
+	lockWait = 300 * time.Millisecond
+	if err := removeWait(file); err == nil {
+		f.Close()
+		t.Fatal("removed a file in use")
+	}
+	lockWait = 10 * time.Second
+	go func() {
+		time.Sleep(500 * time.Millisecond)
+		f.Close()
+	}()
+	if err := removeWait(file); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(file); !errors.Is(err, fs.ErrNotExist) {
+		t.Fatal("not removed")
+	}
+	if err := removeWait(file); err != nil {
+		t.Fatalf("already gone: %v", err)
+	}
+}
+
 func TestDeleteAfterExit(t *testing.T) {
 	if testing.Short() {
 		t.Skip("runs cmd.exe")
