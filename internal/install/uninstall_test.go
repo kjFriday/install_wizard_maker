@@ -1,0 +1,111 @@
+package install
+
+import (
+	"errors"
+	"io/fs"
+	"os"
+	"path/filepath"
+	"reflect"
+	"testing"
+	"time"
+)
+
+func TestUninstall(t *testing.T) {
+	s := newSandbox(t)
+	s.install(t, "1.0.0", v1, Choices{StartMenu: true, Desktop: true})
+	os.WriteFile(filepath.Join(s.dir(), "README.md"), []byte("my notes"), 0o644) // changed
+	os.WriteFile(filepath.Join(s.dir(), "notes.txt"), []byte("mine"), 0o644)     // the user's own
+	purge := filepath.Join(s.pl.LocalAppData, "ACME Inc", "ACME.Hello")
+	os.MkdirAll(purge, 0o755)
+	os.WriteFile(filepath.Join(purge, "settings.json"), []byte("{}"), 0o644)
+	shared := filepath.Join(s.pl.LocalAppData, "ACME Inc", "acme.db")
+	os.WriteFile(shared, []byte("db"), 0o644)
+	m, _ := ReadMarker(s.dir())
+	self := filepath.Join(s.dir(), "uninstall.exe")
+	res, err := Uninstall(s.dir(), m, UEnv{Places: s.pl, Registry: s.reg, Self: self})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(res.Kept, []string{"README.md"}) {
+		t.Fatalf("kept %v", res.Kept)
+	}
+	if !reflect.DeepEqual(res.AfterExit, []string{self, s.dir(), filepath.Dir(s.dir())}) {
+		t.Fatalf("after exit %v", res.AfterExit)
+	}
+	var left []string
+	filepath.WalkDir(s.pl.Root, func(p string, d fs.DirEntry, err error) error {
+		if !d.IsDir() {
+			rel, _ := filepath.Rel(s.pl.Root, p)
+			left = append(left, filepath.ToSlash(rel))
+		}
+		return nil
+	})
+	want := []string{"LocalAppData/ACME Inc/ACME.Hello/settings.json", "LocalAppData/ACME Inc/acme.db",
+		"Programs/ACME Inc/ACME Hello/README.md", "Programs/ACME Inc/ACME Hello/notes.txt",
+		"Programs/ACME Inc/ACME Hello/uninstall.exe"}
+	if !reflect.DeepEqual(left, want) {
+		t.Fatalf("left %v", left)
+	}
+	if _, err := os.Stat(filepath.Join(s.pl.Root, "Start Menu", "ACME Inc")); !errors.Is(err, fs.ErrNotExist) {
+		t.Error("empty Start-menu group left behind")
+	}
+	if _, ok := s.reg.keys["ACME.Hello"]; ok {
+		t.Error("registry entry left")
+	}
+	// purge removes only the program's own settings, never the shared database
+	os.RemoveAll(s.dir())
+	s.install(t, "1.0.0", v1, Choices{StartMenu: true})
+	m, _ = ReadMarker(s.dir())
+	if _, err := Uninstall(s.dir(), m, UEnv{Places: s.pl, Registry: s.reg, Self: self, Purge: true}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(purge); !errors.Is(err, fs.ErrNotExist) {
+		t.Error("purge folder left")
+	}
+	if _, err := os.Stat(shared); err != nil {
+		t.Error("the shared database was removed")
+	}
+}
+
+func TestUninstallTouchesOnlyItsOwn(t *testing.T) {
+	s := newSandbox(t)
+	outside := filepath.Join(s.pl.Root, "outside.txt")
+	os.WriteFile(outside, []byte("x"), 0o644)
+	elsewhere := filepath.Join(s.pl.Root, "elsewhere.lnk")
+	os.WriteFile(elsewhere, []byte("x"), 0o644)
+	dir := s.dir()
+	os.MkdirAll(dir, 0o755)
+	m := &Marker{AppID: "ACME.Hello", Files: []string{"../../../outside.txt", `C:\Windows\win.ini`, "www"},
+		Shortcuts: []string{elsewhere, `C:\Windows\notepad.exe`},
+		SHA256:    map[string]string{"../../../outside.txt": hash([]byte("x"))}}
+	if _, err := Uninstall(dir, m, UEnv{Places: s.pl, Registry: s.reg}); err != nil {
+		t.Fatal(err)
+	}
+	for _, p := range []string{outside, elsewhere} {
+		if _, err := os.Stat(p); err != nil {
+			t.Errorf("%s was removed", p)
+		}
+	}
+}
+
+func TestDeleteAfterExit(t *testing.T) {
+	if testing.Short() {
+		t.Skip("runs cmd.exe")
+	}
+	dir := filepath.Join(t.TempDir(), "sand box & 100%")
+	sub := filepath.Join(dir, "a (1)")
+	os.MkdirAll(sub, 0o755)
+	file := filepath.Join(sub, "un & install%PATH%.exe")
+	os.WriteFile(file, []byte("x"), 0o644)
+	if err := DeleteAfterExit(file, sub, dir); err != nil {
+		t.Fatal(err)
+	}
+	deadline := time.Now().Add(15 * time.Second)
+	for time.Now().Before(deadline) {
+		if _, err := os.Stat(dir); errors.Is(err, fs.ErrNotExist) {
+			return
+		}
+		time.Sleep(200 * time.Millisecond)
+	}
+	t.Fatal("not removed")
+}
