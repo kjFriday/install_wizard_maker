@@ -6,3 +6,4 @@
 *.res binary
 *.rgba binary
 *.syso binary
+testdata/** -text
