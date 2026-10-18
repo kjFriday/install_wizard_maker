@@ -18,30 +18,6 @@ const usage = `Usage:
   wizard-maker.exe build [-o out.exe] [-quiet] setup.json   make the setup.exe setup.json describes
   wizard-maker.exe -version                                 print the version`
 
-// out is where command-line text goes: the console or pipe there is, else one message box at the end.
-type out struct {
-	w     io.Writer
-	buf   strings.Builder
-	quiet bool
-}
-
-func newOut(quiet bool) *out { return &out{w: sys.Stdout(), quiet: quiet} }
-
-func (o *out) printf(format string, a ...any) {
-	s := fmt.Sprintf(format, a...) + "\n"
-	if o.w != nil {
-		io.WriteString(o.w, s)
-	} else {
-		o.buf.WriteString(s)
-	}
-}
-
-func (o *out) done(icon uint32) {
-	if o.w == nil && !o.quiet && o.buf.Len() > 0 {
-		sys.MessageBox(app.Name, strings.TrimSpace(o.buf.String()), icon)
-	}
-}
-
 // Main is the maker's command line. self is its own exe, the program part of every setup.exe.
 func Main(self string, args []string) int {
 	if len(args) > 0 && args[0] == "build" {
@@ -51,22 +27,22 @@ func Main(self string, args []string) int {
 	fs.SetOutput(io.Discard)
 	version := fs.Bool("version", false, "print the version")
 	err := fs.Parse(args)
-	o := newOut(false)
+	o, _ := sys.NewOutput(app.Name, false, "")
 	switch {
 	case err != nil || fs.NArg() > 0:
 		if err == nil {
 			err = fmt.Errorf("unexpected %q", fs.Arg(0))
 		}
-		o.printf("%v\n\n%s", err, usage)
-		o.done(sys.Error)
+		o.Printf("%v\n\n%s", err, usage)
+		o.Done(sys.Error)
 		return app.ExitUsage
 	case *version:
-		o.printf("%s %s", app.Name, app.Version)
-		o.done(sys.Info)
+		o.Printf("%s %s", app.Name, app.Version)
+		o.Done(sys.Info)
 		return app.ExitOK
 	}
-	o.printf("%s\n\n%s", app.Title, usage)
-	o.done(sys.Info)
+	o.Printf("%s\n\n%s", app.Title, usage)
+	o.Done(sys.Info)
 	return app.ExitOK
 }
 
@@ -76,47 +52,40 @@ func buildCommand(self string, args []string) int {
 	output := fs.String("o", "", "where to write the setup.exe (default: output in setup.json)")
 	quiet := fs.Bool("quiet", false, "no message box")
 	err := fs.Parse(args)
-	o := newOut(*quiet)
+	o, _ := sys.NewOutput(app.Name, *quiet, "")
+	fail := func(code int, format string, a ...any) int {
+		o.Printf(format, a...)
+		o.Done(sys.Error)
+		return code
+	}
 	if err != nil || fs.NArg() != 1 {
 		if err == nil && fs.NArg() > 1 {
 			err = errors.New("flags go before setup.json")
 		} else if err == nil {
 			err = errors.New("which setup.json?")
 		}
-		o.printf("%v\n\n%s", err, usage)
-		o.done(sys.Error)
-		return app.ExitUsage
+		return fail(app.ExitUsage, "%v\n\n%s", err, usage)
 	}
 	s, err := spec.Load(fs.Arg(0))
 	if err != nil {
-		o.printf("%v", err)
-		o.done(sys.Error)
-		return app.ExitUsage
+		return fail(app.ExitUsage, "%v", err)
 	}
 	if *output != "" {
 		if s.Output, err = filepath.Abs(*output); err != nil {
-			o.printf("%v", err)
-			o.done(sys.Error)
-			return app.ExitUsage
+			return fail(app.ExitUsage, "%v", err)
 		}
 	}
 	stub, err := os.ReadFile(self)
 	if err != nil {
-		o.printf("%v", err)
-		o.done(sys.Error)
-		return app.ExitFailed
+		return fail(app.ExitFailed, "%v", err)
 	}
-	if _, err := Build(s, stub, o.printf); err != nil {
+	if _, err := Build(s, stub, o.Printf); err != nil {
 		var se *SpecError
 		if errors.As(err, &se) {
-			o.printf("%s has problems:\n  %s", filepath.Base(fs.Arg(0)), strings.ReplaceAll(err.Error(), "\n", "\n  "))
-			o.done(sys.Error)
-			return app.ExitUsage
+			return fail(app.ExitUsage, "%s has problems:\n  %s", filepath.Base(fs.Arg(0)), strings.ReplaceAll(err.Error(), "\n", "\n  "))
 		}
-		o.printf("Build failed: %v", err)
-		o.done(sys.Error)
-		return app.ExitFailed
+		return fail(app.ExitFailed, "Build failed: %v", err)
 	}
-	o.done(sys.Info)
+	o.Done(sys.Info)
 	return app.ExitOK
 }

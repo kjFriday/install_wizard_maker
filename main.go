@@ -8,10 +8,13 @@ package main
 import (
 	"os"
 	"runtime"
+	"strings"
 
 	"acme/wizard/internal/app"
 	"acme/wizard/internal/maker"
+	"acme/wizard/internal/payload"
 	"acme/wizard/internal/sys"
+	"acme/wizard/internal/wizard"
 )
 
 func init() {
@@ -21,10 +24,32 @@ func init() {
 
 func main() {
 	sys.HardenDLLSearch()
+	os.Exit(run(os.Args[1:]))
+}
+
+func run(args []string) int {
 	self, err := os.Executable()
 	if err != nil {
 		sys.MessageBox(app.Name, err.Error(), sys.Error)
-		os.Exit(app.ExitFailed)
+		return app.ExitFailed
 	}
-	os.Exit(maker.Main(self, os.Args[1:]))
+	p, err := payload.Open(self)
+	if err != nil {
+		quiet := false
+		for _, a := range args {
+			quiet = quiet || a == "-quiet" || a == "--quiet" || strings.EqualFold(a, "/S")
+		}
+		out, _ := sys.NewOutput("Setup", quiet, "")
+		out.Printf("%v", err)
+		out.Done(sys.Error)
+		return app.ExitFailed
+	}
+	defer p.Close()
+	switch p.Kind {
+	case payload.Setup:
+		return wizard.RunSetup(self, p, args)
+	case payload.Uninstall:
+		return wizard.RunUninstall(self, p, args)
+	}
+	return maker.Main(self, args)
 }
