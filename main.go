@@ -1,13 +1,17 @@
 // ACME Wizard Maker makes install wizards: one self-contained setup.exe per program, which installs it
 // for the current user (no admin rights), lists it in Apps & features and leaves an uninstaller.
+//
+// One binary, three roles, chosen by the trailer at the end of its own exe: none (the maker), setup
+// (a generated install wizard) or uninstall (the uninstaller a setup leaves behind).
 package main
 
 import (
-	"fmt"
 	"os"
 	"runtime"
 
 	"acme/wizard/internal/app"
+	"acme/wizard/internal/maker"
+	"acme/wizard/internal/sys"
 )
 
 func init() {
@@ -16,9 +20,11 @@ func init() {
 }
 
 func main() {
-	if len(os.Args) > 1 && os.Args[1] == "-version" {
-		fmt.Println(app.Name, app.Version)
-		return
+	sys.HardenDLLSearch()
+	self, err := os.Executable()
+	if err != nil {
+		sys.MessageBox(app.Name, err.Error(), sys.Error)
+		os.Exit(app.ExitFailed)
 	}
-	fmt.Println(app.Title)
+	os.Exit(maker.Main(self, os.Args[1:]))
 }

@@ -6,42 +6,17 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"sync"
 	"syscall"
 	"testing"
 	"unsafe"
+
+	"acme/wizard/internal/testexe"
 )
 
-var (
-	buildOnce sync.Once
-	makerExe  string
-	buildErr  error
-)
-
-// maker builds the wizard maker (its .rsrc comes from the .syso) once for all tests here.
+// maker is the wizard maker's exe; its .rsrc comes from the .syso.
 func maker(t *testing.T) []byte {
 	t.Helper()
-	if testing.Short() {
-		t.Skip("builds an exe")
-	}
-	buildOnce.Do(func() {
-		dir, err := os.MkdirTemp("", "winres-test-")
-		if err != nil {
-			buildErr = err
-			return
-		}
-		makerExe = filepath.Join(dir, "wizard-maker.exe")
-		cmd := exec.Command("go", "build", "-trimpath", "-ldflags", "-H windowsgui -s -w", "-o", makerExe, ".")
-		cmd.Dir = "../.."
-		if out, err := cmd.CombinedOutput(); err != nil {
-			buildErr = err
-			t.Log(string(out))
-		}
-	})
-	if buildErr != nil {
-		t.Fatal(buildErr)
-	}
-	b, err := os.ReadFile(makerExe)
+	b, err := os.ReadFile(testexe.Maker(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -50,9 +25,7 @@ func maker(t *testing.T) []byte {
 
 func TestMain(m *testing.M) {
 	code := m.Run()
-	if makerExe != "" {
-		os.RemoveAll(filepath.Dir(makerExe))
-	}
+	testexe.Cleanup()
 	os.Exit(code)
 }
 

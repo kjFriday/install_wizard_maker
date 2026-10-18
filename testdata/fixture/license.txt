@@ -1,0 +1,3 @@
+Fixture license.
+
+Nothing here is real: ACME Inc. is fictional.

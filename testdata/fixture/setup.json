@@ -1,0 +1,19 @@
+{
+  "id": "ACME.WizardFixture",
+  "name": "ACME Wizard Fixture",
+  "version": "1.0.0",
+  "publisher": "ACME Inc. (fictional)",
+  "group": "ACME Inc",
+  "license": "license.txt",
+  "files": [
+    {"from": "hello.exe"},
+    {"from": "README.md"},
+    {"from": "data", "to": "data"}
+  ],
+  "exclude": ["*.tmp"],
+  "run": {"program": "hello.exe", "args": ["-version"]},
+  "askFolder": true,
+  "shortcuts": {"ask": true, "startMenu": true, "desktop": false},
+  "purge": ["{localappdata}\\ACME Inc\\ACME.WizardFixture"],
+  "output": "dist/{name}-{version}-setup.exe"
+}
