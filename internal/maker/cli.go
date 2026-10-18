@@ -15,8 +15,10 @@ import (
 )
 
 const usage = `Usage:
+  wizard-maker.exe [setup.json]                             open the window
   wizard-maker.exe build [-o out.exe] [-quiet] setup.json   make the setup.exe setup.json describes
-  wizard-maker.exe -version                                 print the version`
+  wizard-maker.exe -version                                 print the version
+  wizard-maker.exe -smoke FILE [setup.json]                 open, build, capture, report to FILE, close`
 
 // Main is the maker's command line. self is its own exe, the program part of every setup.exe.
 func Main(self string, args []string) int {
@@ -26,12 +28,13 @@ func Main(self string, args []string) int {
 	fs := flag.NewFlagSet(app.ExeName, flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	version := fs.Bool("version", false, "print the version")
+	smoke := fs.String("smoke", "", "open the window, build, write a report to this file, close")
 	err := fs.Parse(args)
 	o, _ := sys.NewOutput(app.Name, false, "")
 	switch {
-	case err != nil || fs.NArg() > 0:
+	case err != nil || fs.NArg() > 1:
 		if err == nil {
-			err = fmt.Errorf("unexpected %q", fs.Arg(0))
+			err = fmt.Errorf("unexpected %q", fs.Arg(1))
 		}
 		o.Printf("%v\n\n%s", err, usage)
 		o.Done(sys.Error)
@@ -41,9 +44,7 @@ func Main(self string, args []string) int {
 		o.Done(sys.Info)
 		return app.ExitOK
 	}
-	o.Printf("%s\n\n%s", app.Title, usage)
-	o.Done(sys.Info)
-	return app.ExitOK
+	return Window(self, fs.Arg(0), *smoke)
 }
 
 func buildCommand(self string, args []string) int {

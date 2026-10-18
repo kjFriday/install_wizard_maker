@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"image"
 	"image/color"
 	"image/png"
@@ -120,14 +121,32 @@ func decodeIconBMP(b []byte) image.Image {
 	return img
 }
 
-// Capture renders the whole window (PrintWindow, so windows on top of it do not matter).
+// Capture renders the window with PrintWindow, so windows on top of it do not matter. It first asks
+// the window to paint itself now (never a frame behind, as a copy of the composed window can be); some
+// windows will not (one with a menu bar, started by another program), so it then copies the composed
+// window, and last just the client area.
 func (w *Window) Capture() (*image.RGBA, error) {
 	var r rect
 	procGetWindowRect.Call(w.HWND, uintptr(unsafe.Pointer(&r)))
 	width, height := int(r.right-r.left), int(r.bottom-r.top)
+	cw, ch := w.ClientSize()
 	if width <= 0 || height <= 0 {
 		return nil, errors.New("window has no size")
 	}
+	var err error
+	for _, try := range []struct {
+		flags uintptr
+		w, h  int
+	}{{0, width, height}, {2, width, height}, {1, cw, ch}} { // -, PW_RENDERFULLCONTENT, PW_CLIENTONLY
+		var img *image.RGBA
+		if img, err = w.print(try.flags, try.w, try.h); err == nil {
+			return img, nil
+		}
+	}
+	return nil, err
+}
+
+func (w *Window) print(flags uintptr, width, height int) (*image.RGBA, error) {
 	dc, _, _ := procGetDC.Call(w.HWND)
 	defer procReleaseDC.Call(w.HWND, dc)
 	mem, _, _ := procCreateCompatibleDC.Call(dc)
@@ -135,17 +154,15 @@ func (w *Window) Capture() (*image.RGBA, error) {
 	bmp, _, _ := procCreateCompatibleBitmap.Call(dc, uintptr(width), uintptr(height))
 	defer procDeleteObject.Call(bmp)
 	old, _, _ := procSelectObject.Call(mem, bmp)
-	// flags 0: the window paints itself into our bitmap now (WM_PRINT), so the capture is never a
-	// frame behind, as a copy of the composed window can be
-	ok, _, err := procPrintWindow.Call(w.HWND, mem, 0)
+	ok, _, err := procPrintWindow.Call(w.HWND, mem, flags)
 	procSelectObject.Call(mem, old)
 	if ok == 0 {
-		return nil, err
+		return nil, fmt.Errorf("PrintWindow(%d): %v", flags, err)
 	}
 	bmi := bitmapInfoHeader{size: 40, width: int32(width), height: -int32(height), planes: 1, bitCount: 32}
 	buf := make([]byte, 4*width*height)
 	if n, _, err := procGetDIBits.Call(mem, bmp, 0, uintptr(height), uintptr(unsafe.Pointer(&buf[0])), uintptr(unsafe.Pointer(&bmi)), 0); n == 0 {
-		return nil, err
+		return nil, fmt.Errorf("GetDIBits: %v", err)
 	}
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
 	for i := 0; i < width*height; i++ {

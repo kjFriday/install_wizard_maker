@@ -198,10 +198,10 @@ type smokeReport struct {
 	Exit    int    `json:"exit"`
 	Panic   string `json:"panic"`
 	Pages   []struct {
-		Name     string `json:"name"`
-		PNG      string `json:"png"`
-		Next     bool   `json:"next"`
-		Error    string `json:"error"`
+		Name     string          `json:"name"`
+		PNG      string          `json:"png"`
+		Flags    map[string]bool `json:"flags"`
+		Error    string          `json:"error"`
 		Controls []struct {
 			Class         string `json:"class"`
 			Text          string `json:"text"`
@@ -270,7 +270,7 @@ func TestWizardWindows(t *testing.T) {
 		t.Fatalf("setup smoke: %d %s", code, out)
 	}
 	r := checkSmoke(t, filepath.Join(shots, "setup.json"), []string{"welcome", "license", "license-accepted", "folder", "shortcuts", "progress", "finish"})
-	if r.Pages[1].Next || !r.Pages[2].Next {
+	if r.Pages[1].Flags["next"] || !r.Pages[2].Flags["next"] {
 		t.Fatal("Next should wait for the license to be accepted")
 	}
 	dir := install.SandboxPlaces(root).Dir("ACME Inc", "ACME Wizard Fixture")
@@ -284,6 +284,22 @@ func TestWizardWindows(t *testing.T) {
 	checkSmoke(t, filepath.Join(shots, "uninstall.json"), []string{"confirm", "removing", "done"})
 	if !gone(dir, 15*time.Second) {
 		t.Fatalf("left %v", files(t, dir))
+	}
+}
+
+// The maker's window opens a setup.json and builds it.
+func TestMakerWindow(t *testing.T) {
+	fixture := testexe.Fixture(t)
+	report := filepath.Join(t.TempDir(), "shots", "maker.json")
+	if out, code := runExe(t, testexe.Maker(t), "-smoke", report, filepath.Join(fixture, "setup.json")); code != 0 {
+		t.Fatalf("maker smoke: %d %s", code, out)
+	}
+	r := checkSmoke(t, report, []string{"form", "built"})
+	if !r.Pages[1].Flags["built"] {
+		t.Fatal("not built")
+	}
+	if _, err := os.Stat(filepath.Join(fixture, "dist", "ACME Wizard Fixture-1.0.0-setup.exe")); err != nil {
+		t.Fatal(err)
 	}
 }
 

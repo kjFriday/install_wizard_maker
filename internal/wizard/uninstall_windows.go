@@ -177,20 +177,20 @@ func (ui *uninstallUI) wake() {
 }
 
 func (ui *uninstallUI) smoke(file string) {
-	s := newSmoker(ui.frame, file, "uninstall")
+	s := win.NewSmoke(ui.w, file, "uninstall", ui.title)
 	ui.hold = make(chan struct{})
 	ui.w.Show()
 	for steps := 0; !ui.w.Closed() && steps < 10; steps++ {
 		switch page := ui.flow.Page(); page {
 		case Removing:
-			s.capture("removing")
+			s.Capture("removing", ui.flags())
 			close(ui.hold)
-			s.waitFor(func() bool { return ui.flow.Page() != Removing })
+			s.WaitFor(func() bool { return ui.flow.Page() != Removing })
 		default:
-			s.capture(page.String())
+			s.Capture(page.String(), ui.flags())
 			ui.next.Click()
 		}
 	}
 	ui.w.Close()
-	s.write(ui.code)
+	s.Write(ui.code)
 }

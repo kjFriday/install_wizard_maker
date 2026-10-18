@@ -1,14 +1,7 @@
 package wizard
 
 import (
-	"encoding/json"
-	"fmt"
 	"image"
-	"image/png"
-	"os"
-	"path/filepath"
-	"strings"
-	"time"
 
 	"acme/wizard/internal/win"
 )
@@ -120,90 +113,7 @@ func (f *frame) ask(text string) bool {
 	return f.w.MessageBox(f.title, text, win.MBYesNo|win.MBIconQuestion|win.MBDefButton2) == win.IDYES
 }
 
-// smokeReport is what -smoke writes: every page as the user saw it, captured, with its controls.
-type smokeReport struct {
-	Role      string      `json:"role"`
-	Title     string      `json:"title"`
-	DPI       uint32      `json:"dpi"`
-	TextScale float64     `json:"textScale"`
-	Font      string      `json:"font"`
-	IconSet   bool        `json:"iconSet"`
-	Client    [2]int      `json:"client"`
-	Pages     []smokePage `json:"pages"`
-	Exit      int         `json:"exit"`
-	Panic     string      `json:"panic,omitempty"`
-}
-
-type smokePage struct {
-	Name     string            `json:"name"`
-	PNG      string            `json:"png"`
-	Next     bool              `json:"next"` // Next enabled
-	Back     bool              `json:"back"` // Back enabled
-	Controls []win.ControlInfo `json:"controls"`
-	Error    string            `json:"error,omitempty"` // why there is no PNG
-}
-
-type smoker struct {
-	f      *frame
-	file   string
-	report smokeReport
-}
-
-func newSmoker(f *frame, file, role string) *smoker {
-	os.MkdirAll(filepath.Dir(file), 0o755)
-	cw, ch := f.w.ClientSize()
-	return &smoker{f: f, file: file, report: smokeReport{Role: role, Title: f.title, DPI: f.w.DPI(),
-		TextScale: f.w.TextScale(), Font: f.w.FontFace(), IconSet: f.w.IconSet(), Client: [2]int{cw, ch}}}
-}
-
-// settle lets the window handle everything pending, paint, and finish the buttons' fade animations.
-func (s *smoker) settle() {
-	for i := 0; i < 20; i++ {
-		s.f.w.Pump()
-		time.Sleep(15 * time.Millisecond)
-	}
-}
-
-// capture saves the window as <report>-NN-<name>.png beside the report and records its controls.
-func (s *smoker) capture(name string) {
-	s.settle()
-	base := strings.TrimSuffix(s.file, filepath.Ext(s.file))
-	file := fmt.Sprintf("%s-%02d-%s.png", base, len(s.report.Pages)+1, name)
-	page := smokePage{Name: name, PNG: filepath.Base(file), Next: s.f.next.Enabled(), Back: s.f.back.Enabled(), Controls: s.f.w.Info()}
-	img, err := s.f.w.Capture()
-	for try := 0; err != nil && try < 4; try++ { // the very first capture can come too early
-		s.settle()
-		img, err = s.f.w.Capture()
-	}
-	if err == nil {
-		var out *os.File
-		if out, err = os.Create(file); err == nil {
-			err = png.Encode(out, img)
-			out.Close()
-		}
-	}
-	if err != nil {
-		page.PNG, page.Error = "", err.Error()
-	}
-	s.report.Pages = append(s.report.Pages, page)
-}
-
-// waitFor pumps messages until done reports true (or a minute passes).
-func (s *smoker) waitFor(done func() bool) {
-	for deadline := time.Now().Add(time.Minute); !done() && time.Now().Before(deadline) && !s.f.w.Closed(); {
-		s.f.w.Pump()
-		time.Sleep(20 * time.Millisecond)
-	}
-}
-
-func (s *smoker) write(exit int) error {
-	s.report.Exit = exit
-	if s.f.w.Panic != nil {
-		s.report.Panic = s.f.w.Panic.Error()
-	}
-	b, err := json.MarshalIndent(s.report, "", "  ")
-	if err != nil {
-		return err
-	}
-	return os.WriteFile(s.file, b, 0o644)
+// flags are what a -smoke capture records about the buttons.
+func (f *frame) flags() map[string]bool {
+	return map[string]bool{"next": f.next.Enabled(), "back": f.back.Enabled()}
 }

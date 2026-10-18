@@ -346,26 +346,26 @@ func (ui *setupUI) finish() {
 // smoke walks every page as a user would, capturing each, with the license accepted, the defaults
 // kept and Launch unticked; the install runs for real (so pass -root).
 func (ui *setupUI) smoke(file string) int {
-	s := newSmoker(ui.frame, file, "setup")
+	s := win.NewSmoke(ui.w, file, "setup", ui.title)
 	ui.hold = make(chan struct{})
 	ui.w.Show()
 	for steps := 0; !ui.w.Closed() && steps < 20; steps++ {
 		switch page := ui.flow.Page(); page {
 		case License:
-			s.capture("license")
+			s.Capture("license", ui.flags())
 			ui.accept.Click()
-			s.capture("license-accepted")
+			s.Capture("license-accepted", ui.flags())
 			ui.next.Click()
 		case Progress:
-			s.capture("progress")
+			s.Capture("progress", ui.flags())
 			close(ui.hold)
-			s.waitFor(func() bool { return ui.flow.Page() != Progress })
+			s.WaitFor(func() bool { return ui.flow.Page() != Progress })
 		case Finish:
 			ui.launch.SetChecked(false)
-			s.capture("finish")
+			s.Capture("finish", ui.flags())
 			ui.next.Click()
 		default:
-			s.capture(page.String())
+			s.Capture(page.String(), ui.flags())
 			if !ui.next.Enabled() { // blocked: leave the way a user would
 				ui.code = app.ExitRefused
 				ui.w.Close()
@@ -375,7 +375,7 @@ func (ui *setupUI) smoke(file string) int {
 		}
 	}
 	ui.w.Close()
-	if err := s.write(ui.code); err != nil {
+	if err := s.Write(ui.code); err != nil {
 		return app.ExitFailed
 	}
 	return ui.code
