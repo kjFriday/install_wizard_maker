@@ -1,4 +1,13 @@
-// ==== ACME Inc. portfolio ===============================================
+// ==== Generic Company Inc. portfolio ====================================
+// Project: install_wizard_maker | File: internal/maker/window_windows.go
+// About: ==== Generic Company Inc. portfolio ===============================================...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
+// ==== Generic Company Inc. portfolio ===============================================
 // Project: install_wizard_maker | File: internal/maker/window_windows.go
 // About: Part of package maker in install_wizard_maker.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
@@ -17,11 +26,11 @@ import (
 	"strings"
 	"sync"
 
-	"acme/wizard/internal/app"
-	"acme/wizard/internal/shell"
-	"acme/wizard/internal/spec"
-	"acme/wizard/internal/sys"
-	"acme/wizard/internal/win"
+	"generic-company/wizard/internal/app"
+	"generic-company/wizard/internal/shell"
+	"generic-company/wizard/internal/spec"
+	"generic-company/wizard/internal/sys"
+	"generic-company/wizard/internal/win"
 )
 
 // The maker window's layout (96-dpi units) and command ids.
@@ -493,7 +502,7 @@ func (ui *makerUI) smoke(file string) int {
 func about() string {
 	return app.Title + "\n\nMakes install wizards: one setup.exe per program, which installs it for the current user, " +
 		"lists it in Apps & features and leaves an uninstaller.\n\n" + app.Credit +
-		"\n\nCode: GNU AGPL-3.0. ACME Inc. is fictional."
+		"\n\nCode: GNU AGPL-3.0. Generic Company Inc. is fictional."
 }
 
 // helpItems are the Help menu's entries.
@@ -525,4 +534,4 @@ func (ui *makerUI) helpCommand(id int) {
 	}
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=c5e3ee9a1e33e3a95df128ba65f66993d25799f7d53aa5905a9a99e16ffee266 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=e5c95b6514b3110f927acd3c7028e9de3eb9161d0fc4942e1bab9bd13c04765b ====

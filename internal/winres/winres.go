@@ -1,4 +1,13 @@
-// ==== ACME Inc. portfolio ===============================================
+// ==== Generic Company Inc. portfolio ====================================
+// Project: install_wizard_maker | File: internal/winres/winres.go
+// About: ==== Generic Company Inc. portfolio ===============================================...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
+// ==== Generic Company Inc. portfolio ===============================================
 // Project: install_wizard_maker | File: internal/winres/winres.go
 // About: Package winres reads and writes Windows resources: .ico files, icon groups, version info...
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
@@ -366,4 +375,4 @@ func ICOFromResources(res []Resource) ([]byte, error) {
 	return EncodeICO(images), nil
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=fb7bbb2c3800a9bb22b89b4c2ab318aacb0f801dff384b73333e6ecd6206895d ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=1236f721602d265f27b8c5e4bfcfc21d8bfdfeb2f654a84ebb20f415d72f449b ====

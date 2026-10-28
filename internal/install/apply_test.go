@@ -1,4 +1,13 @@
-// ==== ACME Inc. portfolio ===============================================
+// ==== Generic Company Inc. portfolio ====================================
+// Project: install_wizard_maker | File: internal/install/apply_test.go
+// About: ==== Generic Company Inc. portfolio ===============================================...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
+// ==== Generic Company Inc. portfolio ===============================================
 // Project: install_wizard_maker | File: internal/install/apply_test.go
 // About: Tests for package install.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
@@ -84,8 +93,8 @@ func TestApplyInstallsEverything(t *testing.T) {
 		t.Error("uninstall.exe")
 	}
 	m, err := ReadMarker(s.dir())
-	if err != nil || m.AppID != "ACME.Hello" || m.Version != "1.0.0" || m.SHA256["app.ico"] != hash([]byte("ICON")) ||
-		m.Installer != "ACME Wizard Maker test" || len(m.Shortcuts) != 2 {
+	if err != nil || m.AppID != "GenericCompany.Hello" || m.Version != "1.0.0" || m.SHA256["app.ico"] != hash([]byte("ICON")) ||
+		m.Installer != "Generic Company Wizard Maker test" || len(m.Shortcuts) != 2 {
 		t.Fatalf("marker %+v %v", m, err)
 	}
 	for _, l := range m.Shortcuts {
@@ -96,7 +105,7 @@ func TestApplyInstallsEverything(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(s.dir(), ".setup")); !errors.Is(err, fs.ErrNotExist) {
 		t.Error(".setup left behind")
 	}
-	if v, ok := Lookup(s.reg.keys["ACME.Hello"], "DisplayVersion"); !ok || v.Text != "1.0.0" {
+	if v, ok := Lookup(s.reg.keys["GenericCompany.Hello"], "DisplayVersion"); !ok || v.Text != "1.0.0" {
 		t.Error("registry")
 	}
 	// the siblings' Go marker type reads it: files stay a list of strings
@@ -106,7 +115,7 @@ func TestApplyInstallsEverything(t *testing.T) {
 		Shortcuts []string `json:"shortcuts"`
 	}
 	b, _ := os.ReadFile(filepath.Join(s.dir(), "install.json"))
-	if err := json.Unmarshal(b, &sibling); err != nil || sibling.AppID != "ACME.Hello" || len(sibling.Files) != 6 {
+	if err := json.Unmarshal(b, &sibling); err != nil || sibling.AppID != "GenericCompany.Hello" || len(sibling.Files) != 6 {
 		t.Fatalf("sibling view: %v %+v", err, sibling)
 	}
 }
@@ -129,7 +138,7 @@ func TestApplyUpgrade(t *testing.T) {
 	if b, _ := os.ReadFile(filepath.Join(s.dir(), "hello.exe")); string(b) != "MZ hello 2" {
 		t.Error("hello.exe not upgraded")
 	}
-	if _, err := os.Stat(s.pl.DesktopLink("ACME Hello")); !errors.Is(err, fs.ErrNotExist) {
+	if _, err := os.Stat(s.pl.DesktopLink("Generic Company Hello")); !errors.Is(err, fs.ErrNotExist) {
 		t.Error("desktop shortcut should be gone")
 	}
 	m, _ := ReadMarker(s.dir())
@@ -260,4 +269,4 @@ func TestApplyRefusals(t *testing.T) {
 
 var v2 = memSource{"hello.exe": []byte("MZ hello 2"), "README.md": []byte("read me"), "data/new.json": []byte("[]")}
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=f2265b97cd8e4901e46859780c6818dc5e5c8393ec7ffc61cbbb765834c3dc7f ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=857b4e841932e9a362209e7e77b4a0a2610ccdfa2c252c3a151f1f1dfd069bc8 ====

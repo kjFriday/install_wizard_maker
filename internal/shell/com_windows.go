@@ -1,4 +1,13 @@
-// ==== ACME Inc. portfolio ===============================================
+// ==== Generic Company Inc. portfolio ====================================
+// Project: install_wizard_maker | File: internal/shell/com_windows.go
+// About: ==== Generic Company Inc. portfolio ===============================================...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
+// ==== Generic Company Inc. portfolio ===============================================
 // Project: install_wizard_maker | File: internal/shell/com_windows.go
 // About: Package shell talks to the Windows shell: known folders, .lnk shortcuts (with the...
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
@@ -140,4 +149,4 @@ func fromTaskMem(p *uint16) string {
 	return s
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=c54ecbe526359cf6913c0ba50ddd6bcc5b3ab4c2c004d2d44b352f5a3c33f52a ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=19a743a3f3cd3673111954e40ef0938aa0ec3605d346dad63ae6e27b6e12be2d ====

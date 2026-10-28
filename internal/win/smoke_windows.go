@@ -1,4 +1,13 @@
-// ==== ACME Inc. portfolio ===============================================
+// ==== Generic Company Inc. portfolio ====================================
+// Project: install_wizard_maker | File: internal/win/smoke_windows.go
+// About: ==== Generic Company Inc. portfolio ===============================================...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
+// ==== Generic Company Inc. portfolio ===============================================
 // Project: install_wizard_maker | File: internal/win/smoke_windows.go
 // About: Part of package win in install_wizard_maker.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
@@ -110,4 +119,4 @@ func (s *Smoke) Write(exit int) error {
 	return os.WriteFile(s.file, b, 0o644)
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=93309a5524ae0a1d989408165da77fbf21151736fd2d701c2e25b6f4ed9c7863 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=9ebd58d7785040484b16c89c762319e126e11d4d0aed53be5317ebf5b5588a93 ====

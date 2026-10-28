@@ -1,4 +1,13 @@
-// ==== ACME Inc. portfolio ===============================================
+// ==== Generic Company Inc. portfolio ====================================
+// Project: install_wizard_maker | File: internal/maker/self.go
+// About: ==== Generic Company Inc. portfolio ===============================================...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
+// ==== Generic Company Inc. portfolio ===============================================
 // Project: install_wizard_maker | File: internal/maker/self.go
 // About: Part of package maker in install_wizard_maker.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
@@ -16,12 +25,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"acme/wizard/icon"
-	"acme/wizard/internal/app"
-	"acme/wizard/internal/install"
-	"acme/wizard/internal/reg"
-	"acme/wizard/internal/shell"
-	"acme/wizard/internal/spec"
+	"generic-company/wizard/icon"
+	"generic-company/wizard/internal/app"
+	"generic-company/wizard/internal/install"
+	"generic-company/wizard/internal/reg"
+	"generic-company/wizard/internal/shell"
+	"generic-company/wizard/internal/spec"
 )
 
 // License is the wizard maker's own license text; main embeds LICENSE.
@@ -49,7 +58,7 @@ func SelfSpec(self, dir string) (*spec.Spec, error) {
 
 // selfSetup builds the maker's own setup.exe in a new temp folder; cleanup removes the folder.
 func selfSetup(self string) (setup string, cleanup func(), err error) {
-	dir, err := os.MkdirTemp("", "acme-wizard-maker-")
+	dir, err := os.MkdirTemp("", "generic-company-wizard-maker-")
 	if err != nil {
 		return "", nil, err
 	}
@@ -184,4 +193,4 @@ func startUninstaller(exe string) error {
 	return exec.Command(exe).Start()
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=e8d9f22347589cfcd428b6bfd6ef1f5cd33a14eb79a4178bccee1d33eac59b2c ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=7ffcf39a91821016e6342d7914ea5cdc5386ce1fe890c8d63c737f007ffb329f ====

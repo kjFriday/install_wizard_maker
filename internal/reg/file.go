@@ -1,4 +1,13 @@
-// ==== ACME Inc. portfolio ===============================================
+// ==== Generic Company Inc. portfolio ====================================
+// Project: install_wizard_maker | File: internal/reg/file.go
+// About: ==== Generic Company Inc. portfolio ===============================================...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
+// ==== Generic Company Inc. portfolio ===============================================
 // Project: install_wizard_maker | File: internal/reg/file.go
 // About: Package reg is the Apps & features entry: the per-user Uninstall key in the real...
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
@@ -19,10 +28,10 @@ import (
 	"path/filepath"
 	"sort"
 
-	"acme/wizard/internal/install"
+	"generic-company/wizard/internal/install"
 )
 
-// File is the sandbox registry, root\registry.json, in the other ACME programs' format: one object per
+// File is the sandbox registry, root\registry.json, in the other Generic Company programs' format: one object per
 // key, named "HKCU:\Software\...\Uninstall\<id>", strings as strings and DWORDs as numbers.
 type File struct{ Path string }
 
@@ -114,4 +123,4 @@ func (f File) Delete(id string) error {
 	return f.save(data)
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=7edf7504b7bcf5a1a960f3a174167b34d313992e8284adcac51f49dabc9290db ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=4797523be9a6bf3112dc9c682147b6a41bb565f8824cc7283472961e215742c2 ====

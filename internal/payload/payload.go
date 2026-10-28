@@ -1,4 +1,13 @@
-// ==== ACME Inc. portfolio ===============================================
+// ==== Generic Company Inc. portfolio ====================================
+// Project: install_wizard_maker | File: internal/payload/payload.go
+// About: ==== Generic Company Inc. portfolio ===============================================...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
+// ==== Generic Company Inc. portfolio ===============================================
 // Project: install_wizard_maker | File: internal/payload/payload.go
 // About: Package payload is the part of a setup.exe after the program itself: a zip of everything...
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
@@ -11,7 +20,7 @@
 // and a 32-byte trailer saying where the zip starts and what the exe is for.
 //
 //	setup.exe = program (PE) | zip | 0-7 zero bytes | trailer
-//	trailer   = "ACMEWIZ1" | kind u32 | flags u32 | zip offset u64 | zip length u64   (little-endian)
+//	trailer   = "GENCOWZ1" | kind u32 | flags u32 | zip offset u64 | zip length u64   (little-endian)
 //
 // The padding keeps the file a multiple of 8 bytes, so a code signature appended later needs none and
 // the trailer stays right before it.
@@ -35,7 +44,7 @@ import (
 )
 
 const (
-	Magic       = "ACMEWIZ1"
+	Magic       = "GENCOWZ1"
 	TrailerSize = 32
 )
 
@@ -303,4 +312,4 @@ func (p *File) StubBytes() ([]byte, error) {
 	return b, err
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=15fd2657d701deb059e031aa3293ca146a78c88a1942e7c13ce6e40f37df8ebb ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=477e5e9b6a8fb941696f8ce2e0e1d2ef0a03ac8929e7b2cc66b3255a6732bdac ====

@@ -1,4 +1,13 @@
-// ==== ACME Inc. portfolio ===============================================
+// ==== Generic Company Inc. portfolio ====================================
+// Project: install_wizard_maker | File: internal/shell/shell_test.go
+// About: ==== Generic Company Inc. portfolio ===============================================...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
+// ==== Generic Company Inc. portfolio ===============================================
 // Project: install_wizard_maker | File: internal/shell/shell_test.go
 // About: Tests for package shell.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
@@ -16,7 +25,7 @@ import (
 	"testing"
 	"unsafe"
 
-	"acme/wizard/internal/install"
+	"generic-company/wizard/internal/install"
 )
 
 func TestSizes(t *testing.T) {
@@ -47,9 +56,9 @@ func TestShortcutRoundTrip(t *testing.T) {
 	os.MkdirAll(dir, 0o755)
 	target := filepath.Join(dir, "hello.exe")
 	os.WriteFile(target, []byte("MZ"), 0o755)
-	want := install.Shortcut{Path: filepath.Join(dir, "Start Menu", "ACME Inc", "ACME Hello.lnk"), Target: target,
-		Args: `--db "C:\a b\acme.db"`, WorkDir: dir, Icon: filepath.Join(dir, "app.ico"),
-		Description: "ACME Hello 1.0.0", AppUserModelID: "ACME.Hello"}
+	want := install.Shortcut{Path: filepath.Join(dir, "Start Menu", "Generic Company Inc", "Generic Company Hello.lnk"), Target: target,
+		Args: `--db "C:\a b\generic_company.db"`, WorkDir: dir, Icon: filepath.Join(dir, "app.ico"),
+		Description: "Generic Company Hello 1.0.0", AppUserModelID: "GenericCompany.Hello"}
 	if err := MakeLinkDir(want); err != nil {
 		t.Fatal(err)
 	}
@@ -70,4 +79,4 @@ func TestShortcutRoundTrip(t *testing.T) {
 	}
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=28132eb5f3d488ec23709bb858d353d98633f35ad28013eb954061d7ed8017bf ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=dc08d28c10dc24266e0cba773c41cde0f419c9e5dcbb798ba1764d1b519d0e65 ====

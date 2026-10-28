@@ -1,4 +1,13 @@
-// ==== ACME Inc. portfolio ===============================================
+// ==== Generic Company Inc. portfolio ====================================
+// Project: install_wizard_maker | File: internal/winres/pe_windows_test.go
+// About: ==== Generic Company Inc. portfolio ===============================================...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
+// ==== Generic Company Inc. portfolio ===============================================
 // Project: install_wizard_maker | File: internal/winres/pe_windows_test.go
 // About: Tests for package winres.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
@@ -19,7 +28,7 @@ import (
 	"testing"
 	"unsafe"
 
-	"acme/wizard/internal/testexe"
+	"generic-company/wizard/internal/testexe"
 )
 
 // maker is the wizard maker's exe; its .rsrc comes from the .syso.
@@ -125,8 +134,8 @@ func TestSetResourcesLoadsInWindows(t *testing.T) {
 	ico, _ := os.ReadFile("../../icon/app.ico")
 	images, _ := ParseICO(ico)
 	res := append(IconResources(images[2:3], 1), Resource{Type: TypeManifest, ID: 1, Lang: LangEnUS, Data: manifest},
-		VersionInfo{Version: ParseVersion("2.3.4"), Strings: [][2]string{{"ProductName", "ACME Hello"},
-			{"FileDescription", "ACME Hello Setup"}}}.Resource())
+		VersionInfo{Version: ParseVersion("2.3.4"), Strings: [][2]string{{"ProductName", "Generic Company Hello"},
+			{"FileDescription", "Generic Company Hello Setup"}}}.Resource())
 	out, err := SetResources(append(exe, []byte("an old payload")...), res)
 	if err != nil {
 		t.Fatal(err)
@@ -148,14 +157,14 @@ func TestSetResourcesLoadsInWindows(t *testing.T) {
 	if got := loaded(t, path, TypeManifest, 1, LangEnUS); !bytes.Equal(got, manifest) {
 		t.Fatal("manifest not kept")
 	}
-	if got := versionString(t, path, "FileDescription"); got != "ACME Hello Setup" {
+	if got := versionString(t, path, "FileDescription"); got != "Generic Company Hello Setup" {
 		t.Fatalf("FileDescription %q", got)
 	}
 	run := exec.Command(path, "-version")
 	b, err := run.Output()
-	if err != nil || !strings.Contains(string(b), "ACME Wizard Maker") {
+	if err != nil || !strings.Contains(string(b), "Generic Company Wizard Maker") {
 		t.Fatalf("rewritten exe does not run: %v %q", err, b)
 	}
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=83e4fa8f2a29b6cf79d467de39fab504f4ea5f25ebff67cfe6640cda62bc56a7 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=d2c961eaddb784d886a7ec3c31b3f50c4957e157c7d42b5a1938a1cf027427f4 ====

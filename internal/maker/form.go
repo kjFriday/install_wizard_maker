@@ -1,4 +1,13 @@
-// ==== ACME Inc. portfolio ===============================================
+// ==== Generic Company Inc. portfolio ====================================
+// Project: install_wizard_maker | File: internal/maker/form.go
+// About: ==== Generic Company Inc. portfolio ===============================================...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
+// ==== Generic Company Inc. portfolio ===============================================
 // Project: install_wizard_maker | File: internal/maker/form.go
 // About: Part of package maker in install_wizard_maker.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
@@ -13,7 +22,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"acme/wizard/internal/spec"
+	"generic-company/wizard/internal/spec"
 )
 
 // Form is the maker window's fields as plain text and ticks. Fields the window does not show
@@ -130,4 +139,4 @@ func RuleText(r spec.FileRule) string {
 	return r.From + "  →  " + to
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=5725b10ebb31d375bb163c3f37024d1504ab6dfce704d261782a9c98e890eb0b ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=a439e2bf2071d9e15f6e1c2084928d0a0cd9b6aac4f3711a9dc26ee46541abbb ====

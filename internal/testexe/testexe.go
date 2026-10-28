@@ -1,4 +1,13 @@
-// ==== ACME Inc. portfolio ===============================================
+// ==== Generic Company Inc. portfolio ====================================
+// Project: install_wizard_maker | File: internal/testexe/testexe.go
+// About: ==== Generic Company Inc. portfolio ===============================================...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
+// ==== Generic Company Inc. portfolio ===============================================
 // Project: install_wizard_maker | File: internal/testexe/testexe.go
 // About: Package testexe builds the wizard maker once for a test binary, as released (-trimpath...
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
@@ -42,7 +51,7 @@ func Maker(t testing.TB) string {
 			}
 			return nil
 		})
-		if dir, err = os.MkdirTemp("", "acme-wizard-test-"); err != nil {
+		if dir, err = os.MkdirTemp("", "generic-company-wizard-test-"); err != nil {
 			return
 		}
 		path = filepath.Join(dir, "wizard-maker.exe")
@@ -89,4 +98,4 @@ func moduleRoot() string {
 	return filepath.Dir(strings.TrimSpace(string(out)))
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=eabcfd39946ee3fb9d56d879d55d2ef24bf19b8bd9a0265a3c6bd9f581b505aa ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=658bbb0f8db701d4710cae54927992979f922d6b05346efd639524e1792737d6 ====

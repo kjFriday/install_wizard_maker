@@ -1,4 +1,13 @@
-// ==== ACME Inc. portfolio ===============================================
+// ==== Generic Company Inc. portfolio ====================================
+// Project: install_wizard_maker | File: internal/wizard/frame_windows.go
+// About: ==== Generic Company Inc. portfolio ===============================================...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
+// ==== Generic Company Inc. portfolio ===============================================
 // Project: install_wizard_maker | File: internal/wizard/frame_windows.go
 // About: Part of package wizard in install_wizard_maker.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
@@ -12,7 +21,7 @@ package wizard
 import (
 	"image"
 
-	"acme/wizard/internal/win"
+	"generic-company/wizard/internal/win"
 )
 
 // The wizard's layout, in 96-dpi units (the classic wizard size), and its command ids.
@@ -127,4 +136,4 @@ func (f *frame) flags() map[string]bool {
 	return map[string]bool{"next": f.next.Enabled(), "back": f.back.Enabled()}
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=4102681cb99d72dcd4fa6f1f83349dcbcacbb8ed902b97dcfcf2b380fed2e023 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=23a44b48bbeba0f4bb906078e9c928fb6b211c870a1cc8366448d8bfcaaca259 ====

@@ -1,4 +1,13 @@
-// ==== ACME Inc. portfolio ===============================================
+// ==== Generic Company Inc. portfolio ====================================
+// Project: install_wizard_maker | File: internal/spec/spec_test.go
+// About: ==== Generic Company Inc. portfolio ===============================================...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
+// ==== Generic Company Inc. portfolio ===============================================
 // Project: install_wizard_maker | File: internal/spec/spec_test.go
 // About: Tests for package spec.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
@@ -45,12 +54,12 @@ func valid(t *testing.T) *Spec {
 		"setup.json":            "",
 	})
 	s := New(dir)
-	s.ID, s.Name, s.Version, s.Publisher, s.Group = "ACME.Hello", "ACME Hello", "1.2.0", "ACME Inc. (fictional)", "ACME Inc"
+	s.ID, s.Name, s.Version, s.Publisher, s.Group = "GenericCompany.Hello", "Generic Company Hello", "1.2.0", "Generic Company Inc. (fictional)", "Generic Company Inc"
 	s.Icon, s.License = "icon/app.ico", "LICENSE"
 	s.Files = []FileRule{{From: "app"}, {From: "extra/notes.txt", To: "docs"}}
 	s.Exclude = []string{"__pycache__", "test_*"}
-	s.Run = Run{Program: "hello.exe", Args: []string{"--db", "{localappdata}\\ACME Inc\\acme.db"}}
-	s.Purge = []string{`{localappdata}\ACME Inc\ACME.Hello`}
+	s.Run = Run{Program: "hello.exe", Args: []string{"--db", "{localappdata}\\Generic Company Inc\\generic_company.db"}}
+	s.Purge = []string{`{localappdata}\Generic Company Inc\GenericCompany.Hello`}
 	return s
 }
 
@@ -107,7 +116,7 @@ func TestValidSpec(t *testing.T) {
 		t.Fatalf("license %q", text)
 	}
 	out, _ := s.OutputPath()
-	if out != filepath.Join(s.Dir(), "ACME Hello-1.2.0-setup.exe") {
+	if out != filepath.Join(s.Dir(), "Generic Company Hello-1.2.0-setup.exe") {
 		t.Fatalf("output %s", out)
 	}
 }
@@ -118,10 +127,10 @@ func TestCheckReportsProblems(t *testing.T) {
 		edit func(s *Spec)
 		want string
 	}{
-		{"bad id", func(s *Spec) { s.ID = "ACME Hello" }, "id:"},
-		{"bad name", func(s *Spec) { s.Name = "ACME: Hello" }, "name:"},
+		{"bad id", func(s *Spec) { s.ID = "Generic Company Hello" }, "id:"},
+		{"bad name", func(s *Spec) { s.Name = "Generic Company: Hello" }, "name:"},
 		{"device name", func(s *Spec) { s.Name = "NUL" }, "reserved device name"},
-		{"trailing dot", func(s *Spec) { s.Group = "ACME." }, "group:"},
+		{"trailing dot", func(s *Spec) { s.Group = "GenericCompany." }, "group:"},
 		{"bad version", func(s *Spec) { s.Version = "1.2-beta" }, "version:"},
 		{"big version", func(s *Spec) { s.Version = "1.70000" }, "larger than 65535"},
 		{"no publisher", func(s *Spec) { s.Publisher = " " }, "publisher:"},
@@ -134,7 +143,7 @@ func TestCheckReportsProblems(t *testing.T) {
 		{"unknown placeholder", func(s *Spec) { s.Run.Args = []string{"{home}"} }, "unknown placeholder {home}"},
 		{"stray brace", func(s *Spec) { s.Run.Args = []string{"{app"} }, "stray"},
 		{"bad aumid", func(s *Spec) { s.Run.AppUserModelID = "has space" }, "appUserModelId"},
-		{"shallow purge", func(s *Spec) { s.Purge = []string{`{localappdata}\ACME Inc`} }, "two folders deep"},
+		{"shallow purge", func(s *Spec) { s.Purge = []string{`{localappdata}\Generic Company Inc`} }, "two folders deep"},
 		{"purge elsewhere", func(s *Spec) { s.Purge = []string{`C:\Windows\System32`} }, "purge:"},
 		{"purge escapes", func(s *Spec) { s.Purge = []string{`{appdata}\..\..\x`} }, "purge:"},
 		{"bad pattern", func(s *Spec) { s.Exclude = []string{"[x"} }, "bad pattern"},
@@ -198,15 +207,15 @@ func TestExpand(t *testing.T) {
 }
 
 func TestPurgePath(t *testing.T) {
-	got, err := PurgePath(`{localappdata}\ACME Inc\ACME.Hello`, `C:\U\Local`, `C:\U\Roaming`)
-	if err != nil || got != `C:\U\Local\ACME Inc\ACME.Hello` {
+	got, err := PurgePath(`{localappdata}\Generic Company Inc\GenericCompany.Hello`, `C:\U\Local`, `C:\U\Roaming`)
+	if err != nil || got != `C:\U\Local\Generic Company Inc\GenericCompany.Hello` {
 		t.Fatalf("%q %v", got, err)
 	}
-	got, err = PurgePath(`{appdata}/ACME Inc/Hello`, `C:\U\Local`, `C:\U\Roaming`)
-	if err != nil || got != `C:\U\Roaming\ACME Inc\Hello` {
+	got, err = PurgePath(`{appdata}/Generic Company Inc/Hello`, `C:\U\Local`, `C:\U\Roaming`)
+	if err != nil || got != `C:\U\Roaming\Generic Company Inc\Hello` {
 		t.Fatalf("%q %v", got, err)
 	}
-	for _, bad := range []string{`{localappdata}`, `{localappdata}\ACME Inc`, `{appdata}\..\x\y`, `{temp}\a\b`, `C:\a\b\c`} {
+	for _, bad := range []string{`{localappdata}`, `{localappdata}\Generic Company Inc`, `{appdata}\..\x\y`, `{temp}\a\b`, `C:\a\b\c`} {
 		if _, err := PurgePath(bad, `C:\U\Local`, `C:\U\Roaming`); err == nil {
 			t.Errorf("%q accepted", bad)
 		}
@@ -217,7 +226,7 @@ func TestManifestCheck(t *testing.T) {
 	s := valid(t)
 	files := []File{{Path: "hello.exe", Size: 2, SHA256: strings.Repeat("ab", 32)},
 		{Path: "data/a.json", Size: 2, SHA256: strings.Repeat("cd", 32)}}
-	m := s.Manifest(files, "text", "ACME Wizard Maker 0.1.0")
+	m := s.Manifest(files, "text", "Generic Company Wizard Maker 0.1.0")
 	back, err := ParseManifest(m.JSON())
 	if err != nil {
 		t.Fatal(err)
@@ -246,4 +255,4 @@ func TestManifestCheck(t *testing.T) {
 	}
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=d1132b85118296e7cca1c42971a1c93c0bd9de88dd0150f886ef58ec19fcd251 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=8ca7e5e153f9808dd92cc2de8f0e7aea4548cbf07a521169cfca0cbd199aaf24 ====

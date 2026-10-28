@@ -1,4 +1,13 @@
-// ==== ACME Inc. portfolio ===============================================
+// ==== Generic Company Inc. portfolio ====================================
+// Project: install_wizard_maker | File: internal/maker/build.go
+// About: ==== Generic Company Inc. portfolio ===============================================...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
+// ==== Generic Company Inc. portfolio ===============================================
 // Project: install_wizard_maker | File: internal/maker/build.go
 // About: Package maker is the wizard maker itself: Build turns a spec into a setup.exe, Main is...
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
@@ -24,10 +33,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"acme/wizard/internal/app"
-	"acme/wizard/internal/payload"
-	"acme/wizard/internal/spec"
-	"acme/wizard/internal/winres"
+	"generic-company/wizard/internal/app"
+	"generic-company/wizard/internal/payload"
+	"generic-company/wizard/internal/spec"
+	"generic-company/wizard/internal/winres"
 )
 
 // Result describes a setup.exe that was built.
@@ -238,4 +247,4 @@ func human(n int64) string {
 	return fmt.Sprintf("%.1f MB", float64(n)/(1024*1024))
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=0f8aa7b936d87bbdeafb077b0fdadaf0c997604cd5aa3ae5add0c3628bfe2b98 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=74a2ab1829315275db038188de5e8543b73d06cea52b4249cb21c6e3a4c28154 ====

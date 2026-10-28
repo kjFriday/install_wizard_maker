@@ -1,4 +1,13 @@
-// ==== ACME Inc. portfolio ===============================================
+// ==== Generic Company Inc. portfolio ====================================
+// Project: install_wizard_maker | File: internal/maker/build_test.go
+// About: ==== Generic Company Inc. portfolio ===============================================...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
+// ==== Generic Company Inc. portfolio ===============================================
 // Project: install_wizard_maker | File: internal/maker/build_test.go
 // About: Tests for package maker.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
@@ -20,10 +29,10 @@ import (
 	"strings"
 	"testing"
 
-	"acme/wizard/internal/payload"
-	"acme/wizard/internal/spec"
-	"acme/wizard/internal/testexe"
-	"acme/wizard/internal/winres"
+	"generic-company/wizard/internal/payload"
+	"generic-company/wizard/internal/spec"
+	"generic-company/wizard/internal/testexe"
+	"generic-company/wizard/internal/winres"
 )
 
 func TestMain(m *testing.M) {
@@ -52,7 +61,7 @@ func build(t *testing.T, dir string) Result {
 func TestBuildMakesASetup(t *testing.T) {
 	dir := testexe.Fixture(t)
 	r := build(t, dir)
-	if r.Path != filepath.Join(dir, "dist", "ACME Wizard Fixture-1.0.0-setup.exe") || r.Files != 3 {
+	if r.Path != filepath.Join(dir, "dist", "Wizard Fixture-1.0.0-setup.exe") || r.Files != 3 {
 		t.Fatalf("%+v", r)
 	}
 	p, err := payload.Open(r.Path)
@@ -84,7 +93,7 @@ func TestBuildMakesASetup(t *testing.T) {
 			t.Errorf("%s: packed bytes differ: %v", f.Path, err)
 		}
 	}
-	if strings.Join(paths, ",") != "README.md,data/settings.json,hello.exe" || m.License != "Fixture license.\n\nNothing here is real: ACME Inc. is fictional.\n" || m.Maker == "" {
+	if strings.Join(paths, ",") != "README.md,data/settings.json,hello.exe" || m.License != "Fixture license.\n\nNothing here is real: Generic Company Inc. is fictional.\n" || m.Maker == "" {
 		t.Fatalf("manifest %v %q", paths, m.License)
 	}
 	if bytes.Contains(b, []byte(dir)) || bytes.Contains(b, []byte(filepath.ToSlash(dir))) {
@@ -107,7 +116,7 @@ func TestBuildMakesASetup(t *testing.T) {
 		}
 	}
 	v, strs, err := winres.ReadVersionInfo(version)
-	if err != nil || v != [4]uint16{1, 0, 0, 0} || strs["FileDescription"] != "ACME Wizard Fixture Setup" {
+	if err != nil || v != [4]uint16{1, 0, 0, 0} || strs["FileDescription"] != "Wizard Fixture Setup" {
 		t.Fatalf("version info %v %v %v", v, strs, err)
 	}
 }
@@ -173,7 +182,7 @@ func TestCommandLine(t *testing.T) {
 	if out, code := run(t, dir, "build", "bad.json"); code != 2 || !strings.Contains(out, "id:") || !strings.Contains(out, "nothing to pack") {
 		t.Fatalf("bad spec: %d %s", code, out)
 	}
-	if out, code := run(t, dir, "-version"); code != 0 || !strings.Contains(out, "ACME Wizard Maker 0.1.0") {
+	if out, code := run(t, dir, "-version"); code != 0 || !strings.Contains(out, "Generic Company Wizard Maker 0.1.0") {
 		t.Fatalf("-version: %d %s", code, out)
 	}
 	if _, code := run(t, dir, "-bogus"); code != 2 {
@@ -181,4 +190,4 @@ func TestCommandLine(t *testing.T) {
 	}
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=5565a5fbf7daca1da92965e27c2f366b5b2e38a3bbabc03dfb54535d44509606 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=ef23b42a550410f6f460d3d7706c5f20bb8afa2986bbc43a5c1b3152e3d4d28e ====

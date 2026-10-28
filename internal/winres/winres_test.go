@@ -1,4 +1,13 @@
-// ==== ACME Inc. portfolio ===============================================
+// ==== Generic Company Inc. portfolio ====================================
+// Project: install_wizard_maker | File: internal/winres/winres_test.go
+// About: ==== Generic Company Inc. portfolio ===============================================...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
+// ==== Generic Company Inc. portfolio ===============================================
 // Project: install_wizard_maker | File: internal/winres/winres_test.go
 // About: Tests for package winres.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
@@ -107,8 +116,8 @@ func TestIcoAndGroup(t *testing.T) {
 
 func TestVersionInfo(t *testing.T) {
 	v := VersionInfo{Version: ParseVersion("1.2.3"), Strings: [][2]string{
-		{"CompanyName", "ACME Inc. (fictional)"}, {"FileDescription", "ACME Hello Setup"},
-		{"ProductName", "ACME Hello"}, {"ProductVersion", "1.2.3"}}}
+		{"CompanyName", "Generic Company Inc. (fictional)"}, {"FileDescription", "Generic Company Hello Setup"},
+		{"ProductName", "Generic Company Hello"}, {"ProductVersion", "1.2.3"}}}
 	b := v.Bytes()
 	if len(b)%4 != 0 && len(b)%2 != 0 {
 		t.Fatalf("odd length %d", len(b))
@@ -120,7 +129,7 @@ func TestVersionInfo(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got != [4]uint16{1, 2, 3, 0} || strs["FileDescription"] != "ACME Hello Setup" || strs["CompanyName"] != "ACME Inc. (fictional)" || len(strs) != 4 {
+	if got != [4]uint16{1, 2, 3, 0} || strs["FileDescription"] != "Generic Company Hello Setup" || strs["CompanyName"] != "Generic Company Inc. (fictional)" || len(strs) != 4 {
 		t.Fatalf("%v %v", got, strs)
 	}
 	if ParseVersion("10.0.19045.1") != [4]uint16{10, 0, 19045, 1} {
@@ -128,4 +137,4 @@ func TestVersionInfo(t *testing.T) {
 	}
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=7c899f72308ae6d75887abdca0378d6c9e0eab24710f66d5ac24a13e16920a15 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=b61ee99f228aa9c0a3f8391a3dc53a6523e404d48a8cb6b3ff15719352789ea7 ====

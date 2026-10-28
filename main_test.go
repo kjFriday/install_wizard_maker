@@ -1,4 +1,13 @@
-// ==== ACME Inc. portfolio ===============================================
+// ==== Generic Company Inc. portfolio ====================================
+// Project: install_wizard_maker | File: main_test.go
+// About: ==== Generic Company Inc. portfolio ===============================================...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
+// ==== Generic Company Inc. portfolio ===============================================
 // Project: install_wizard_maker | File: main_test.go
 // About: Tests for package main.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
@@ -21,12 +30,12 @@ import (
 	"testing"
 	"time"
 
-	"acme/wizard/internal/app"
-	"acme/wizard/internal/install"
-	"acme/wizard/internal/maker"
-	"acme/wizard/internal/shell"
-	"acme/wizard/internal/spec"
-	"acme/wizard/internal/testexe"
+	"generic-company/wizard/internal/app"
+	"generic-company/wizard/internal/install"
+	"generic-company/wizard/internal/maker"
+	"generic-company/wizard/internal/shell"
+	"generic-company/wizard/internal/spec"
+	"generic-company/wizard/internal/testexe"
 )
 
 func TestMain(m *testing.M) {
@@ -81,7 +90,7 @@ func registry(t *testing.T, root string) map[string]map[string]any {
 	return data
 }
 
-const key = `HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\ACME.WizardFixture`
+const key = `HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\GenericCompany.WizardFixture`
 
 func files(t *testing.T, dir string) []string {
 	var out []string
@@ -113,26 +122,26 @@ func TestQuietSetupEndToEnd(t *testing.T) {
 		t.Fatalf("setup: %d %s", code, out)
 	}
 	pl := install.SandboxPlaces(root)
-	dir := pl.Dir("ACME Inc", "ACME Wizard Fixture")
+	dir := pl.Dir("Generic Company Inc", "Wizard Fixture")
 	if got := files(t, dir); !reflect.DeepEqual(got, []string{"README.md", "app.ico", "data/settings.json", "hello.exe", "install.json", "uninstall.exe"}) {
 		t.Fatalf("installed %v", got)
 	}
 	m, err := install.ReadMarker(dir)
-	if err != nil || m.AppID != "ACME.WizardFixture" || len(m.SHA256) != 5 || !strings.HasPrefix(m.Installer, "ACME Wizard Maker") {
+	if err != nil || m.AppID != "GenericCompany.WizardFixture" || len(m.SHA256) != 5 || !strings.HasPrefix(m.Installer, "Generic Company Wizard Maker") {
 		t.Fatalf("marker %+v %v", m, err)
 	}
 	uninstall := filepath.Join(dir, "uninstall.exe")
 	v := registry(t, root)[key]
 	if v["UninstallString"] != `"`+uninstall+`" -root "`+root+`"` || v["QuietUninstallString"] != v["UninstallString"].(string)+" -quiet" ||
-		v["NoModify"] != float64(1) || v["DisplayName"] != "ACME Wizard Fixture 1.0.0" {
+		v["NoModify"] != float64(1) || v["DisplayName"] != "Wizard Fixture 1.0.0" {
 		t.Fatalf("registry %v", v)
 	}
-	link, err := shell.ReadLink(pl.StartMenuLink("ACME Inc", "ACME Wizard Fixture"))
+	link, err := shell.ReadLink(pl.StartMenuLink("Generic Company Inc", "Wizard Fixture"))
 	if err != nil || link.Target != filepath.Join(dir, "hello.exe") || link.Args != "-version" ||
 		link.Icon != filepath.Join(dir, "app.ico") || link.WorkDir != dir {
 		t.Fatalf("shortcut %+v %v", link, err)
 	}
-	if b, _ := os.ReadFile(log); !strings.Contains(string(b), "Installed ACME Wizard Fixture 1.0.0") {
+	if b, _ := os.ReadFile(log); !strings.Contains(string(b), "Installed Wizard Fixture 1.0.0") {
 		t.Fatalf("log %s", b)
 	}
 
@@ -152,7 +161,7 @@ func TestQuietSetupEndToEnd(t *testing.T) {
 	if registry(t, root)[key] != nil {
 		t.Fatal("registry entry left")
 	}
-	if _, err := os.Stat(filepath.Join(root, "Start Menu", "ACME Inc")); !errors.Is(err, fs.ErrNotExist) {
+	if _, err := os.Stat(filepath.Join(root, "Start Menu", "Generic Company Inc")); !errors.Is(err, fs.ErrNotExist) {
 		t.Fatal("Start-menu folder left")
 	}
 }
@@ -165,7 +174,7 @@ func TestUpgradeDowngradeAndRefusals(t *testing.T) {
 		s["files"] = []any{map[string]any{"from": "hello.exe"}, map[string]any{"from": "data", "to": "data"}} // no README.md
 	})
 	root := filepath.Join(t.TempDir(), "root")
-	dir := install.SandboxPlaces(root).Dir("ACME Inc", "ACME Wizard Fixture")
+	dir := install.SandboxPlaces(root).Dir("Generic Company Inc", "Wizard Fixture")
 	if out, code := runExe(t, v1, "-quiet", "-root", root, "-desktop-shortcut"); code != 0 {
 		t.Fatalf("v1: %s", out)
 	}
@@ -184,13 +193,13 @@ func TestUpgradeDowngradeAndRefusals(t *testing.T) {
 
 	// a folder another program owns is left alone
 	other := filepath.Join(t.TempDir(), "other")
-	odir := install.SandboxPlaces(other).Dir("ACME Inc", "ACME Wizard Fixture")
+	odir := install.SandboxPlaces(other).Dir("Generic Company Inc", "Wizard Fixture")
 	os.MkdirAll(odir, 0o755)
-	os.WriteFile(filepath.Join(odir, "install.json"), []byte(`{"app_id": "ACME.Other", "files": []}`), 0o644)
+	os.WriteFile(filepath.Join(odir, "install.json"), []byte(`{"app_id": "GenericCompany.Other", "files": []}`), 0o644)
 	if out, code := runExe(t, v1, "-quiet", "-root", other); code != 4 {
 		t.Fatalf("foreign folder: %d %s", code, out)
 	}
-	if got := files(t, other); !reflect.DeepEqual(got, []string{"Programs/ACME Inc/ACME Wizard Fixture/install.json"}) {
+	if got := files(t, other); !reflect.DeepEqual(got, []string{"Programs/Generic Company Inc/Wizard Fixture/install.json"}) {
 		t.Fatalf("foreign folder touched: %v", got)
 	}
 
@@ -285,7 +294,7 @@ func TestWizardWindows(t *testing.T) {
 	if r.Pages[1].Flags["next"] || !r.Pages[2].Flags["next"] {
 		t.Fatal("Next should wait for the license to be accepted")
 	}
-	dir := install.SandboxPlaces(root).Dir("ACME Inc", "ACME Wizard Fixture")
+	dir := install.SandboxPlaces(root).Dir("Generic Company Inc", "Wizard Fixture")
 	uninstall := filepath.Join(dir, "uninstall.exe")
 	if _, err := os.Stat(uninstall); err != nil {
 		t.Fatalf("not installed: %v", err)
@@ -320,8 +329,8 @@ func TestPythonProgram(t *testing.T) {
 		t.Fatalf("%d %s", code, out)
 	}
 	pl := install.SandboxPlaces(root)
-	dir := pl.Dir("ACME Inc", "ACME Wizard Fixture")
-	link, err := shell.ReadLink(pl.StartMenuLink("ACME Inc", "ACME Wizard Fixture"))
+	dir := pl.Dir("Generic Company Inc", "Wizard Fixture")
+	link, err := shell.ReadLink(pl.StartMenuLink("Generic Company Inc", "Wizard Fixture"))
 	if err != nil || !strings.EqualFold(filepath.Base(link.Target), "pythonw.exe") || link.Args != `"`+filepath.Join(dir, "main.py")+`"` {
 		t.Fatalf("%+v %v", link, err)
 	}
@@ -386,26 +395,26 @@ func TestMakerWindow(t *testing.T) {
 	if !r.Pages[1].Flags["built"] {
 		t.Fatal("not built")
 	}
-	if _, err := os.Stat(filepath.Join(fixture, "dist", "ACME Wizard Fixture-1.0.0-setup.exe")); err != nil {
+	if _, err := os.Stat(filepath.Join(fixture, "dist", "Wizard Fixture-1.0.0-setup.exe")); err != nil {
 		t.Fatal(err)
 	}
 }
 
-// An install made by a program's own -install (the other ACME programs) is taken over cleanly.
+// An install made by a program's own -install (the other Generic Company programs) is taken over cleanly.
 func TestTakeOverASiblingInstall(t *testing.T) {
 	fixture := testexe.Fixture(t)
 	setup := build(t, fixture, nil)
 	root := filepath.Join(t.TempDir(), "root")
 	pl := install.SandboxPlaces(root)
-	dir := pl.Dir("ACME Inc", "ACME Wizard Fixture")
+	dir := pl.Dir("Generic Company Inc", "Wizard Fixture")
 	os.MkdirAll(dir, 0o755)
 	os.WriteFile(filepath.Join(dir, "hello.exe"), []byte("old exe"), 0o755)
 	os.WriteFile(filepath.Join(dir, "app.ico"), []byte("old icon"), 0o644)
 	os.WriteFile(filepath.Join(dir, "extra.dll"), []byte("from the old install"), 0o644)
-	link := pl.StartMenuLink("ACME Inc", "ACME Wizard Fixture")
+	link := pl.StartMenuLink("Generic Company Inc", "Wizard Fixture")
 	os.MkdirAll(filepath.Dir(link), 0o755)
 	os.WriteFile(link, []byte("old shortcut"), 0o644)
-	marker, _ := json.Marshal(map[string]any{"app_id": "ACME.WizardFixture", "name": "ACME Wizard Fixture", "version": "0.2.0",
+	marker, _ := json.Marshal(map[string]any{"app_id": "GenericCompany.WizardFixture", "name": "Wizard Fixture", "version": "0.2.0",
 		"files": []string{"hello.exe", "app.ico", "extra.dll"}, "shortcuts": []string{link}})
 	os.WriteFile(filepath.Join(dir, "install.json"), marker, 0o644)
 	reg, _ := json.Marshal(map[string]any{key: map[string]any{"InstallLocation": dir, "DisplayVersion": "0.2.0",
@@ -435,4 +444,4 @@ func TestTakeOverASiblingInstall(t *testing.T) {
 	}
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=eb14eb7ad31c6e387da9df0a14953c33b8ed5dc7f7d8f05387eba3c28defba0b ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=66eb95e8a865530daf91d5361fc769ef456f42c6e023d65b774431c2d7178977 ====

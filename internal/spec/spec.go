@@ -1,4 +1,13 @@
-// ==== ACME Inc. portfolio ===============================================
+// ==== Generic Company Inc. portfolio ====================================
+// Project: install_wizard_maker | File: internal/spec/spec.go
+// About: ==== Generic Company Inc. portfolio ===============================================...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
+// ==== Generic Company Inc. portfolio ===============================================
 // Project: install_wizard_maker | File: internal/spec/spec.go
 // About: Package spec reads and checks setup.json, the description of one install wizard, and...
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
@@ -332,7 +341,7 @@ func isFile(p string) bool {
 func checkIdentity(id, name, version, publisher, group string) []error {
 	var errs []error
 	if !idPattern.MatchString(id) {
-		errs = append(errs, fmt.Errorf("id: %q should be 1-64 letters, digits, '.', '_' or '-' (e.g. ACME.CMS)", id))
+		errs = append(errs, fmt.Errorf("id: %q should be 1-64 letters, digits, '.', '_' or '-' (e.g. GenericCompany.CMS)", id))
 	}
 	if err := checkComponent(name, 64); err != nil {
 		errs = append(errs, fmt.Errorf("name: %w", err))
@@ -495,4 +504,4 @@ func CompareVersions(a, b string) int {
 	return 0
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=8872ba4d1789314df15372c76ec72a5d42a05a3b173f6dfb16706783d60be374 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=435d7abe7e7eb5f4c27ac28456a8e5c8b7ca99bb073c24c8f6da3009a1d2f149 ====

@@ -1,4 +1,13 @@
-// ==== ACME Inc. portfolio ===============================================
+// ==== Generic Company Inc. portfolio ====================================
+// Project: install_wizard_maker | File: internal/install/plan_test.go
+// About: ==== Generic Company Inc. portfolio ===============================================...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
+// ==== Generic Company Inc. portfolio ===============================================
 // Project: install_wizard_maker | File: internal/install/plan_test.go
 // About: Tests for package install.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
@@ -24,7 +33,7 @@ import (
 	"testing"
 	"time"
 
-	"acme/wizard/internal/spec"
+	"generic-company/wizard/internal/spec"
 )
 
 var today = time.Date(2026, 10, 17, 0, 0, 0, 0, time.UTC)
@@ -50,10 +59,10 @@ func (m memSource) CopyChecked(name string, w io.Writer, size int64, want string
 }
 
 func manifest(version string, files memSource) *spec.Manifest {
-	m := &spec.Manifest{Format: 1, ID: "ACME.Hello", Name: "ACME Hello", Version: version, Publisher: "ACME Inc. (fictional)",
-		Group: "ACME Inc", Run: spec.Run{Program: "hello.exe", Args: []string{"--db", `{localappdata}\ACME Inc\acme.db`}},
+	m := &spec.Manifest{Format: 1, ID: "GenericCompany.Hello", Name: "Generic Company Hello", Version: version, Publisher: "Generic Company Inc. (fictional)",
+		Group: "Generic Company Inc", Run: spec.Run{Program: "hello.exe", Args: []string{"--db", `{localappdata}\Generic Company Inc\generic_company.db`}},
 		AskFolder: true, Shortcuts: spec.Shortcuts{Ask: true, StartMenu: true},
-		Purge: []string{`{localappdata}\ACME Inc\ACME.Hello`}, Maker: "ACME Wizard Maker test"}
+		Purge: []string{`{localappdata}\Generic Company Inc\GenericCompany.Hello`}, Maker: "Generic Company Wizard Maker test"}
 	var names []string
 	for n := range files {
 		names = append(names, n)
@@ -103,7 +112,7 @@ func newSandbox(t *testing.T) *sandbox {
 	return &sandbox{pl: SandboxPlaces(t.TempDir()), reg: &memRegistry{keys: map[string][]Value{}}}
 }
 
-func (s *sandbox) dir() string { return s.pl.Dir("ACME Inc", "ACME Hello") }
+func (s *sandbox) dir() string { return s.pl.Dir("Generic Company Inc", "Generic Company Hello") }
 
 var v1 = memSource{"hello.exe": []byte("MZ hello 1"), "README.md": []byte("read me"), "data/old.json": []byte("{}"),
 	"data/settings.json": []byte(`{"v":1}`)}
@@ -115,21 +124,21 @@ func TestPlanNewInstall(t *testing.T) {
 		t.Fatal(err)
 	}
 	if got := []string{p.Links[0].Path, p.Links[1].Path}; !reflect.DeepEqual(got, []string{
-		filepath.Join(s.pl.Root, "Start Menu", "ACME Inc", "ACME Hello.lnk"), filepath.Join(s.pl.Root, "Desktop", "ACME Hello.lnk")}) {
+		filepath.Join(s.pl.Root, "Start Menu", "Generic Company Inc", "Generic Company Hello.lnk"), filepath.Join(s.pl.Root, "Desktop", "Generic Company Hello.lnk")}) {
 		t.Fatalf("links %v", got)
 	}
 	l := p.Links[0]
 	if l.Target != filepath.Join(s.dir(), "hello.exe") || l.WorkDir != s.dir() || l.Icon != filepath.Join(s.dir(), "app.ico") ||
-		l.Args != `--db "`+filepath.Join(s.pl.LocalAppData, "ACME Inc", "acme.db")+`"` {
+		l.Args != `--db "`+filepath.Join(s.pl.LocalAppData, "Generic Company Inc", "generic_company.db")+`"` {
 		t.Fatalf("shortcut %+v", l)
 	}
 	want := map[string]string{
-		"DisplayName":          "ACME Hello 1.0.0",
+		"DisplayName":          "Generic Company Hello 1.0.0",
 		"InstallLocation":      s.dir(),
 		"UninstallString":      `"` + filepath.Join(s.dir(), "uninstall.exe") + `" -root "` + s.pl.Root + `"`,
 		"QuietUninstallString": `"` + filepath.Join(s.dir(), "uninstall.exe") + `" -root "` + s.pl.Root + `" -quiet`,
 		"InstallDate":          "20261017",
-		"Publisher":            "ACME Inc. (fictional)",
+		"Publisher":            "Generic Company Inc. (fictional)",
 	}
 	for name, text := range want {
 		if v, _ := Lookup(p.Registry, name); v.Text != text || v.Type != RegSZ {
@@ -149,10 +158,10 @@ func TestPlanRefuses(t *testing.T) {
 	s := newSandbox(t)
 	c := Choices{Dir: s.dir(), StartMenu: true}
 	var r *Refusal
-	if _, err := MakePlan(manifest("1.0.0", v1), s.pl, c, &Marker{AppID: "ACME.Hello", Version: "1.10"}, today, 0); !errors.As(err, &r) {
+	if _, err := MakePlan(manifest("1.0.0", v1), s.pl, c, &Marker{AppID: "GenericCompany.Hello", Version: "1.10"}, today, 0); !errors.As(err, &r) {
 		t.Fatalf("downgrade: %v", err)
 	}
-	if _, err := MakePlan(manifest("1.0.0", v1), s.pl, c, &Marker{AppID: "ACME.Other", Version: "0.1"}, today, 0); !errors.As(err, &r) {
+	if _, err := MakePlan(manifest("1.0.0", v1), s.pl, c, &Marker{AppID: "GenericCompany.Other", Version: "0.1"}, today, 0); !errors.As(err, &r) {
 		t.Fatalf("foreign: %v", err)
 	}
 	m := manifest("1.0.0", v1)
@@ -168,15 +177,15 @@ func TestPlanRefuses(t *testing.T) {
 	}
 }
 
-// The other ACME programs' markers have no hashes: shipped entries are replaced, the rest kept.
+// The other Generic Company programs' markers have no hashes: shipped entries are replaced, the rest kept.
 func TestPlanOverSiblingMarkers(t *testing.T) {
 	s := newSandbox(t)
 	for name, files := range map[string][]string{
-		"go":     {"acme-hello.exe", "app.ico"},
+		"go":     {"generic-company-hello.exe", "app.ico"},
 		"python": {"main.py", "data/x.json", "icon/app.ico"},
 		"rust":   {"hello.exe", "www"},
 	} {
-		old := &Marker{AppID: "ACME.Hello", Version: "0.2.0", Files: files}
+		old := &Marker{AppID: "GenericCompany.Hello", Version: "0.2.0", Files: files}
 		p, err := MakePlan(manifest("1.0.0", v1), s.pl, Choices{Dir: s.dir()}, old, today, 0)
 		if err != nil {
 			t.Fatal(err)
@@ -203,7 +212,7 @@ func TestCheckFolder(t *testing.T) {
 	os.WriteFile(filepath.Join(full, "x.txt"), nil, 0o644)
 	ours := filepath.Join(s.pl.Programs, "Ours")
 	theirs := filepath.Join(s.pl.Programs, "Theirs")
-	for dir, id := range map[string]string{ours: "ACME.Hello", theirs: "ACME.Other"} {
+	for dir, id := range map[string]string{ours: "GenericCompany.Hello", theirs: "GenericCompany.Other"} {
 		os.MkdirAll(dir, 0o755)
 		os.WriteFile(filepath.Join(dir, MarkerName), (&Marker{AppID: id}).JSON(), 0o644)
 	}
@@ -212,7 +221,7 @@ func TestCheckFolder(t *testing.T) {
 		full: false, theirs: false, s.pl.Programs: false, `C:\`: false, "relative": false,
 		filepath.Join(s.pl.Programs, strings.Repeat("x", 160)): false,
 	} {
-		if err := CheckFolder(dir, "ACME.Hello", s.pl); (err == nil) != ok {
+		if err := CheckFolder(dir, "GenericCompany.Hello", s.pl); (err == nil) != ok {
 			t.Errorf("%s: %v", dir, err)
 		}
 	}
@@ -220,17 +229,17 @@ func TestCheckFolder(t *testing.T) {
 
 func TestExisting(t *testing.T) {
 	s := newSandbox(t)
-	if dir, m := Existing(s.reg, s.pl, "ACME.Hello", "ACME Inc", "ACME Hello"); dir != "" || m != nil {
+	if dir, m := Existing(s.reg, s.pl, "GenericCompany.Hello", "Generic Company Inc", "Generic Company Hello"); dir != "" || m != nil {
 		t.Fatal("found an install in an empty sandbox")
 	}
 	custom := filepath.Join(s.pl.Root, "Custom", "Hello")
 	os.MkdirAll(custom, 0o755)
-	os.WriteFile(filepath.Join(custom, MarkerName), (&Marker{AppID: "ACME.Hello", Version: "1.0"}).JSON(), 0o644)
-	s.reg.keys["ACME.Hello"] = []Value{Str("InstallLocation", custom)}
-	if dir, m := Existing(s.reg, s.pl, "ACME.Hello", "ACME Inc", "ACME Hello"); dir != custom || m.Version != "1.0" {
+	os.WriteFile(filepath.Join(custom, MarkerName), (&Marker{AppID: "GenericCompany.Hello", Version: "1.0"}).JSON(), 0o644)
+	s.reg.keys["GenericCompany.Hello"] = []Value{Str("InstallLocation", custom)}
+	if dir, m := Existing(s.reg, s.pl, "GenericCompany.Hello", "Generic Company Inc", "Generic Company Hello"); dir != custom || m.Version != "1.0" {
 		t.Fatalf("%s %+v", dir, m)
 	}
-	if dir, _ := Existing(s.reg, s.pl, "ACME.Other", "ACME Inc", "ACME Other"); dir != "" {
+	if dir, _ := Existing(s.reg, s.pl, "GenericCompany.Other", "Generic Company Inc", "Generic Company Other"); dir != "" {
 		t.Fatal("another program's folder matched")
 	}
 }
@@ -243,4 +252,4 @@ func TestQuoteArg(t *testing.T) {
 	}
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=e16227956452865f8dbdd3492a455bf16fe8b7072603566eda853edaa097ef1e ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=ccf59773fc63f93dffa145947ce03829293cedcdd53be279ff3aad72556b9d43 ====

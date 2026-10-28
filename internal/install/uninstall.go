@@ -1,4 +1,13 @@
-// ==== ACME Inc. portfolio ===============================================
+// ==== Generic Company Inc. portfolio ====================================
+// Project: install_wizard_maker | File: internal/install/uninstall.go
+// About: ==== Generic Company Inc. portfolio ===============================================...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
+// ==== Generic Company Inc. portfolio ===============================================
 // Project: install_wizard_maker | File: internal/install/uninstall.go
 // About: Part of package install in install_wizard_maker.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
@@ -20,7 +29,7 @@ import (
 	"syscall"
 	"time"
 
-	"acme/wizard/internal/spec"
+	"generic-company/wizard/internal/spec"
 )
 
 // UEnv is what an uninstall needs.
@@ -134,13 +143,13 @@ func removeWait(path string) error {
 // the folders if they are empty (never with /s: kept files stay). The paths travel in environment
 // variables, quoted, so no character in a folder name can change the command.
 func DeleteAfterExit(file string, dirs ...string) error {
-	env := append(os.Environ(), "ACME_DEL="+file)
-	try := `del /f /q "%ACME_DEL%" 2>nul`
+	env := append(os.Environ(), "GENERIC_COMPANY_DEL="+file)
+	try := `del /f /q "%GENERIC_COMPANY_DEL%" 2>nul`
 	script := `ping -n 3 127.0.0.1 >nul & ` + try +
-		` & (if exist "%ACME_DEL%" (ping -n 3 127.0.0.1 >nul & ` + try + `))` +
-		` & (if exist "%ACME_DEL%" (ping -n 6 127.0.0.1 >nul & ` + try + `))`
+		` & (if exist "%GENERIC_COMPANY_DEL%" (ping -n 3 127.0.0.1 >nul & ` + try + `))` +
+		` & (if exist "%GENERIC_COMPANY_DEL%" (ping -n 6 127.0.0.1 >nul & ` + try + `))`
 	for i, d := range dirs {
-		v := "ACME_RD" + string(rune('1'+i))
+		v := "GENERIC_COMPANY_RD" + string(rune('1'+i))
 		env = append(env, v+"="+d)
 		script += ` & rd "%` + v + `%" 2>nul`
 	}
@@ -152,4 +161,4 @@ func DeleteAfterExit(file string, dirs ...string) error {
 	return cmd.Start()
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=84cdc6844e38945f17d4869e8fb6232aeb92669aa114eb7d3702aa2b17aa3303 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=5818bf802e88bdc3a74178bd45e9415c43af1b23e658c97ab900f7d96ed535c8 ====

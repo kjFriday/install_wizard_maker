@@ -1,4 +1,13 @@
-// ==== ACME Inc. portfolio ===============================================
+// ==== Generic Company Inc. portfolio ====================================
+// Project: install_wizard_maker | File: internal/payload/payload_test.go
+// About: ==== Generic Company Inc. portfolio ===============================================...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
+// ==== Generic Company Inc. portfolio ===============================================
 // Project: install_wizard_maker | File: internal/payload/payload_test.go
 // About: Tests for package payload.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
@@ -178,4 +187,4 @@ func TestRejectsEscapingNames(t *testing.T) {
 	}
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=ef869ddecc33fbb21fe0052a4d2f6a75da7e0883c7fbc4135aff99b9122ea9b0 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=31657762c88a6d14a8bc6531f5e3bf0af7d8b7b876030a2dcf3b5324c31ff628 ====

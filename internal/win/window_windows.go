@@ -1,4 +1,13 @@
-// ==== ACME Inc. portfolio ===============================================
+// ==== Generic Company Inc. portfolio ====================================
+// Project: install_wizard_maker | File: internal/win/window_windows.go
+// About: ==== Generic Company Inc. portfolio ===============================================...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
+// ==== Generic Company Inc. portfolio ===============================================
 // Project: install_wizard_maker | File: internal/win/window_windows.go
 // About: Part of package win in install_wizard_maker.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
@@ -42,7 +51,7 @@ const (
 	Banner             // the welcome and finish pages' side banner: dark, white text
 )
 
-// BannerColor is the side banner's colour (COLORREF, 0x00BBGGRR): a dark ACME blue.
+// BannerColor is the side banner's colour (COLORREF, 0x00BBGGRR): a dark Generic Company blue.
 const BannerColor = 0x005B3923
 
 // Control is one child window.
@@ -91,7 +100,7 @@ var (
 	subclassCB = syscall.NewCallback(subclassProc)
 )
 
-const className = "ACMEWizardWindow"
+const className = "GenericCompanyWizardWindow"
 
 func register() error {
 	icc := [2]uint32{8, 0x00FF | 0x4000} // ICC_WIN95_CLASSES | ICC_STANDARD_CLASSES
@@ -719,4 +728,4 @@ type MenuItem struct {
 	Text string
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=e2e543897e19e9992646d20c514749a5346f28131d493e5c3eff2b70da993cbe ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=8c18ecf9799dcbbc75133a111e530cd99d7cf29aac394952af2888004fb8685b ====

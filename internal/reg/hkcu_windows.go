@@ -1,4 +1,13 @@
-// ==== ACME Inc. portfolio ===============================================
+// ==== Generic Company Inc. portfolio ====================================
+// Project: install_wizard_maker | File: internal/reg/hkcu_windows.go
+// About: ==== Generic Company Inc. portfolio ===============================================...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
+// ==== Generic Company Inc. portfolio ===============================================
 // Project: install_wizard_maker | File: internal/reg/hkcu_windows.go
 // About: Part of package reg in install_wizard_maker.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
@@ -15,7 +24,7 @@ import (
 	"syscall"
 	"unsafe"
 
-	"acme/wizard/internal/install"
+	"generic-company/wizard/internal/install"
 )
 
 // Root keys.
@@ -255,4 +264,4 @@ func utf16Text(b []byte) string {
 	return syscall.UTF16ToString(u)
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=b7e3a754228ca729dfec56a7bd0b4827c575cbda4d703f379506a90d02357b40 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=ea5431705fc48cb14ed9219eeaa87e22692d1d0cc591e82d387c383bb52c1812 ====

@@ -1,4 +1,13 @@
-// ==== ACME Inc. portfolio ===============================================
+// ==== Generic Company Inc. portfolio ====================================
+// Project: install_wizard_maker | File: internal/reg/reg_test.go
+// About: ==== Generic Company Inc. portfolio ===============================================...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
+// ==== Generic Company Inc. portfolio ===============================================
 // Project: install_wizard_maker | File: internal/reg/reg_test.go
 // About: Tests for package reg.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
@@ -18,13 +27,13 @@ import (
 	"testing"
 	"time"
 
-	"acme/wizard/internal/install"
+	"generic-company/wizard/internal/install"
 )
 
 var values = []install.Value{
-	install.Str("DisplayName", "ACME Hello 1.0.0"),
+	install.Str("DisplayName", "Generic Company Hello 1.0.0"),
 	install.DWord("EstimatedSize", 42),
-	install.Str("InstallLocation", `C:\Users\x\AppData\Local\Programs\ACME Inc\ACME Hello`),
+	install.Str("InstallLocation", `C:\Users\x\AppData\Local\Programs\Generic Company Inc\Generic Company Hello`),
 	install.DWord("NoModify", 1),
 	install.Str("UninstallString", `"C:\x\uninstall.exe" -root "C:\sand box & 100%"`),
 }
@@ -59,20 +68,20 @@ func roundTrip(t *testing.T, r install.Registry, id string) {
 }
 
 func TestFileRoundTrip(t *testing.T) {
-	roundTrip(t, File{Path: filepath.Join(t.TempDir(), "registry.json")}, "ACME.Hello")
+	roundTrip(t, File{Path: filepath.Join(t.TempDir(), "registry.json")}, "GenericCompany.Hello")
 }
 
-// The other ACME programs read and write the same file.
+// The other Generic Company programs read and write the same file.
 func TestFileMatchesTheSiblings(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "registry.json")
-	sibling := `{"HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\ACME.CMS": {"DisplayName": "ACME Journal 0.2.0", "NoModify": 1}}`
+	sibling := `{"HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\GenericCompany.CMS": {"DisplayName": "Generic Company Journal 0.2.0", "NoModify": 1}}`
 	os.WriteFile(path, []byte(sibling), 0o644)
 	f := File{Path: path}
-	got, found, err := f.Read("ACME.CMS")
-	if err != nil || !found || !reflect.DeepEqual(got, []install.Value{install.Str("DisplayName", "ACME Journal 0.2.0"), install.DWord("NoModify", 1)}) {
+	got, found, err := f.Read("GenericCompany.CMS")
+	if err != nil || !found || !reflect.DeepEqual(got, []install.Value{install.Str("DisplayName", "Generic Company Journal 0.2.0"), install.DWord("NoModify", 1)}) {
 		t.Fatalf("%v %v %+v", found, err, got)
 	}
-	if err := f.Write("ACME.Hello", values); err != nil {
+	if err := f.Write("GenericCompany.Hello", values); err != nil {
 		t.Fatal(err)
 	}
 	var data map[string]map[string]any
@@ -80,8 +89,8 @@ func TestFileMatchesTheSiblings(t *testing.T) {
 	if err := json.Unmarshal(b, &data); err != nil {
 		t.Fatal(err)
 	}
-	key := data[`HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\ACME.Hello`]
-	if key["NoModify"] != float64(1) || key["DisplayName"] != "ACME Hello 1.0.0" || data[`HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\ACME.CMS`] == nil {
+	key := data[`HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\GenericCompany.Hello`]
+	if key["NoModify"] != float64(1) || key["DisplayName"] != "Generic Company Hello 1.0.0" || data[`HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\GenericCompany.CMS`] == nil {
 		t.Fatalf("%s", b)
 	}
 }
@@ -90,25 +99,25 @@ func TestHKCURoundTrip(t *testing.T) {
 	if testing.Short() {
 		t.Skip("writes the real registry (a throwaway key)")
 	}
-	base := fmt.Sprintf(`Software\ACME Wizard Maker test\%d-%d`, os.Getpid(), time.Now().UnixNano())
+	base := fmt.Sprintf(`Software\Generic Company Wizard Maker test\%d-%d`, os.Getpid(), time.Now().UnixNano())
 	defer func() {
 		HKCU{}.deleteTree(base)
-		DeleteKey(CurrentUser, `Software\ACME Wizard Maker test`)
+		DeleteKey(CurrentUser, `Software\Generic Company Wizard Maker test`)
 	}()
-	roundTrip(t, HKCU{Base: base}, "ACME.Hello")
+	roundTrip(t, HKCU{Base: base}, "GenericCompany.Hello")
 	if subs, err := Subkeys(CurrentUser, base); err != nil || len(subs) != 0 {
 		t.Fatalf("left %v %v", subs, err)
 	}
-	HKCU{Base: base}.Write("ACME.Hello", values)
-	if subs, _ := Subkeys(CurrentUser, base); !reflect.DeepEqual(subs, []string{"ACME.Hello"}) {
+	HKCU{Base: base}.Write("GenericCompany.Hello", values)
+	if subs, _ := Subkeys(CurrentUser, base); !reflect.DeepEqual(subs, []string{"GenericCompany.Hello"}) {
 		t.Fatalf("subkeys %v", subs)
 	}
-	if s, ok := String(CurrentUser, base+`\ACME.Hello`, "DisplayName"); !ok || s != "ACME Hello 1.0.0" {
+	if s, ok := String(CurrentUser, base+`\GenericCompany.Hello`, "DisplayName"); !ok || s != "Generic Company Hello 1.0.0" {
 		t.Fatalf("String: %q %v", s, ok)
 	}
-	if _, ok := String(CurrentUser, base+`\ACME.Hello`, "NoModify"); ok {
+	if _, ok := String(CurrentUser, base+`\GenericCompany.Hello`, "NoModify"); ok {
 		t.Fatal("a DWORD read as a string")
 	}
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=6e1908aca276efb25117b6d6ccdcb629fc6ed13b06d5d7eb1421a5e81fde7c3e ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=1457f2f4c3f249a09386de33f544be24c8bbe1e6fcd6e44e383c358f014a6cd9 ====

@@ -1,4 +1,13 @@
-// ==== ACME Inc. portfolio ===============================================
+// ==== Generic Company Inc. portfolio ====================================
+// Project: install_wizard_maker | File: internal/maker/self_test.go
+// About: ==== Generic Company Inc. portfolio ===============================================...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
+// ==== Generic Company Inc. portfolio ===============================================
 // Project: install_wizard_maker | File: internal/maker/self_test.go
 // About: Tests for package maker.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
@@ -16,12 +25,12 @@ import (
 	"strings"
 	"testing"
 
-	"acme/wizard/internal/app"
-	"acme/wizard/internal/install"
+	"generic-company/wizard/internal/app"
+	"generic-company/wizard/internal/install"
 )
 
 func TestRunsFrom(t *testing.T) {
-	dir := filepath.Join(t.TempDir(), "ACME Wizard Maker")
+	dir := filepath.Join(t.TempDir(), "Generic Company Wizard Maker")
 	for _, c := range []struct {
 		self string
 		want bool
@@ -108,4 +117,4 @@ func tree(t *testing.T, root string) map[string]string {
 	return files
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=b71e740e1773d473052364d64c4e35b8bce674963e1bf7b7eb9044332abdb669 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=f2d90b23fc5ff1eb9b308a69f9747608598c3189fd553b8c8a7c595bbc23c04a ====

@@ -1,4 +1,13 @@
-// ==== ACME Inc. portfolio ===============================================
+// ==== Generic Company Inc. portfolio ====================================
+// Project: install_wizard_maker | File: internal/winres/pe.go
+// About: ==== Generic Company Inc. portfolio ===============================================...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
+// ==== Generic Company Inc. portfolio ===============================================
 // Project: install_wizard_maker | File: internal/winres/pe.go
 // About: Part of package winres in install_wizard_maker.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
@@ -151,4 +160,4 @@ func SetResources(exe []byte, res []Resource) ([]byte, error) {
 
 func alignUp(n, a uint32) uint32 { return (n + a - 1) &^ (a - 1) }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=ddc45bc3c6606662fbead541e40f7188393cbb8616b5cad651fa7867fccf6bc4 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=09093b09703c70c41436494079f423937ec0523798714d6d981a8754180c4a3c ====

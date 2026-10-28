@@ -1,4 +1,13 @@
-// ==== ACME Inc. portfolio ===============================================
+// ==== Generic Company Inc. portfolio ====================================
+// Project: install_wizard_maker | File: internal/winres/version.go
+// About: ==== Generic Company Inc. portfolio ===============================================...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
+// ==== Generic Company Inc. portfolio ===============================================
 // Project: install_wizard_maker | File: internal/winres/version.go
 // About: Part of package winres in install_wizard_maker.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
@@ -186,4 +195,4 @@ func fromUTF16(b []byte) string {
 	return string(utf16.Decode(u))
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=60c0a5b116739b6b9f961583e1f56e22d3708233ea16bc10cf39c26243d0463a ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=78b0668446eacd1f21a2042ea2beb8356377eaf211a09c76dab9bd0f38ef6ca1 ====

@@ -1,4 +1,13 @@
-// ==== ACME Inc. portfolio ===============================================
+// ==== Generic Company Inc. portfolio ====================================
+// Project: install_wizard_maker | File: internal/install/plan.go
+// About: ==== Generic Company Inc. portfolio ===============================================...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
+// ==== Generic Company Inc. portfolio ===============================================
 // Project: install_wizard_maker | File: internal/install/plan.go
 // About: Package install puts a setup's files in place for the current user, and takes them away...
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
@@ -14,7 +23,7 @@
 // worked is .setup deleted, and any failure puts back exactly what was there. Uninstall removes only
 // what the marker lists, and only files that are still as they were installed.
 //
-// The marker (install.json) keeps the fields the other ACME programs' self-installers write, so each
+// The marker (install.json) keeps the fields the other Generic Company programs' self-installers write, so each
 // can take over or remove the other's install.
 package install
 
@@ -30,7 +39,7 @@ import (
 	"syscall"
 	"time"
 
-	"acme/wizard/internal/spec"
+	"generic-company/wizard/internal/spec"
 )
 
 // Names setup writes into every install folder.
@@ -52,7 +61,7 @@ type Places struct {
 	Root         string // the -root sandbox; "" on the real computer
 }
 
-// SandboxPlaces is the -root layout the other ACME programs use: everything under root, and the
+// SandboxPlaces is the -root layout the other Generic Company programs use: everything under root, and the
 // registry in root\registry.json.
 func SandboxPlaces(root string) Places {
 	root, _ = filepath.Abs(root)
@@ -362,4 +371,4 @@ func Existing(reg Registry, pl Places, id, group, name string) (dir string, m *M
 	return "", nil
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=b7182ae57fb4a3a03ce8e58340aee15a53e05df0fb285074477b702fc082ffb5 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=ed5a5a3e5613fd386814964fcbe9da64324588d79538d914d3dee6c2e1d5c738 ====

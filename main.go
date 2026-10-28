@@ -1,13 +1,22 @@
-// ==== ACME Inc. portfolio ===============================================
+// ==== Generic Company Inc. portfolio ====================================
 // Project: install_wizard_maker | File: main.go
-// About: ACME Wizard Maker makes install wizards: one self-contained setup.exe per program, which...
+// About: ==== Generic Company Inc. portfolio ===============================================...
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
 // the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
 
-// ACME Wizard Maker makes install wizards: one self-contained setup.exe per program, which installs it
+// ==== Generic Company Inc. portfolio ===============================================
+// Project: install_wizard_maker | File: main.go
+// About: Generic Company Wizard Maker makes install wizards: one self-contained setup.exe per program, which...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
+// Generic Company Wizard Maker makes install wizards: one self-contained setup.exe per program, which installs it
 // for the current user (no admin rights), lists it in Apps & features and leaves an uninstaller.
 //
 // One binary, three roles, chosen by the trailer at the end of its own exe: none (the maker), setup
@@ -20,11 +29,11 @@ import (
 	"runtime"
 	"strings"
 
-	"acme/wizard/internal/app"
-	"acme/wizard/internal/maker"
-	"acme/wizard/internal/payload"
-	"acme/wizard/internal/sys"
-	"acme/wizard/internal/wizard"
+	"generic-company/wizard/internal/app"
+	"generic-company/wizard/internal/maker"
+	"generic-company/wizard/internal/payload"
+	"generic-company/wizard/internal/sys"
+	"generic-company/wizard/internal/wizard"
 )
 
 //go:embed LICENSE
@@ -68,4 +77,4 @@ func run(args []string) int {
 	return maker.Main(self, args)
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=0ca5651d18816d30779766869780e00cb37b5366ee0a6b8630b47fc273baad6d ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=d649c37337c06ea7e124bdc034ba88e373110e2969ea6baa585e57c4ef68d753 ====

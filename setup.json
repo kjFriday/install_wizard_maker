@@ -1,9 +1,9 @@
 {
-  "id": "ACME.Wizard",
-  "name": "ACME Wizard Maker",
+  "id": "GenericCompany.Wizard",
+  "name": "Generic Company Wizard Maker",
   "version": "0.1.0",
-  "publisher": "ACME Inc. (fictional)",
-  "group": "ACME Inc",
+  "publisher": "Generic Company Inc. (fictional)",
+  "group": "Generic Company Inc",
   "icon": "icon/app.ico",
   "license": "LICENSE",
   "files": [

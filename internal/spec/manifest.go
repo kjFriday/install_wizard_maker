@@ -1,4 +1,13 @@
-// ==== ACME Inc. portfolio ===============================================
+// ==== Generic Company Inc. portfolio ====================================
+// Project: install_wizard_maker | File: internal/spec/manifest.go
+// About: ==== Generic Company Inc. portfolio ===============================================...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
+// ==== Generic Company Inc. portfolio ===============================================
 // Project: install_wizard_maker | File: internal/spec/manifest.go
 // About: Part of package spec in install_wizard_maker.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
@@ -178,4 +187,4 @@ func PurgePath(p, localAppData, appData string) (string, error) {
 	return out, nil
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=e9e137ff263e8672e1e1792b2bc643029cd76e462f6ab2ef1026cf8ac0fa2c5e ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=0f1380f06337765590048aef29ca7c892d8f8df4639350e75eeb68cfeff32847 ====

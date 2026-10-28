@@ -1,4 +1,13 @@
-// ==== ACME Inc. portfolio ===============================================
+// ==== Generic Company Inc. portfolio ====================================
+// Project: install_wizard_maker | File: internal/wizard/setup.go
+// About: ==== Generic Company Inc. portfolio ===============================================...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
+// ==== Generic Company Inc. portfolio ===============================================
 // Project: install_wizard_maker | File: internal/wizard/setup.go
 // About: Package wizard is what a built setup.exe runs (the install wizard) and the uninstall.exe...
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
@@ -22,13 +31,13 @@ import (
 	"strings"
 	"time"
 
-	"acme/wizard/internal/app"
-	"acme/wizard/internal/install"
-	"acme/wizard/internal/payload"
-	"acme/wizard/internal/reg"
-	"acme/wizard/internal/shell"
-	"acme/wizard/internal/spec"
-	"acme/wizard/internal/sys"
+	"generic-company/wizard/internal/app"
+	"generic-company/wizard/internal/install"
+	"generic-company/wizard/internal/payload"
+	"generic-company/wizard/internal/reg"
+	"generic-company/wizard/internal/shell"
+	"generic-company/wizard/internal/spec"
+	"generic-company/wizard/internal/sys"
 )
 
 type setupOptions struct {
@@ -243,7 +252,7 @@ func RunSetup(self string, p *payload.File, args []string) int {
 		out.Done(sys.Info)
 		return app.ExitOK
 	}
-	release, ok := sys.Lock("ACME.Wizard." + s.M.ID)
+	release, ok := sys.Lock("GenericCompany.Wizard." + s.M.ID)
 	if !ok {
 		out.Printf("Setup or uninstall of %s is already running.", s.M.Name)
 		out.Done(sys.Warning)
@@ -281,4 +290,4 @@ func quietSetup(s *Setup, out *sys.Output) int {
 	return app.ExitOK
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=73246cbf0207dcc8fe1412e590260c2f3daccc5ea1ae182ff66ebe6034ae23e3 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=1fa5224645be6b1f19b2cc059d8f6323b0a3dc6477eb420e54e913b09232744f ====

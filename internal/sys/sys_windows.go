@@ -1,4 +1,13 @@
-// ==== ACME Inc. portfolio ===============================================
+// ==== Generic Company Inc. portfolio ====================================
+// Project: install_wizard_maker | File: internal/sys/sys_windows.go
+// About: ==== Generic Company Inc. portfolio ===============================================...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
+// ==== Generic Company Inc. portfolio ===============================================
 // Project: install_wizard_maker | File: internal/sys/sys_windows.go
 // About: Package sys holds the small Windows calls every role needs: a safe DLL search path, a...
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
@@ -70,4 +79,4 @@ func MessageBox(title, text string, icon uint32) {
 	procMessageBox.Call(0, uintptr(unsafe.Pointer(m)), uintptr(unsafe.Pointer(t)), uintptr(icon))
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=cba713227b74c4015c26dbd1641dfde45fc3f381de49491f118223aa177811e8 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=5a581a8a4d9e1695d66458d8213f7af4b844438d56efd13985c68a0a871c9f11 ====

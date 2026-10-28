@@ -1,4 +1,13 @@
-// ==== ACME Inc. portfolio ===============================================
+// ==== Generic Company Inc. portfolio ====================================
+// Project: install_wizard_maker | File: internal/wizard/flow.go
+// About: ==== Generic Company Inc. portfolio ===============================================...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
+// ==== Generic Company Inc. portfolio ===============================================
 // Project: install_wizard_maker | File: internal/wizard/flow.go
 // About: Part of package wizard in install_wizard_maker.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
@@ -137,4 +146,4 @@ func (f *Flow) index(p Page) int {
 	return -1
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=d107a294f9ca48345a7a7db683bf7436e841db3454e381768489de21a900a2af ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=7e37bcc24e1d86f86d5eb789b15504a6873ada986c65f90218b5e0ac66cac46f ====

@@ -1,10 +1,10 @@
 <img src="icon/app-256.png" width="64" height="64" alt="" style="image-rendering: pixelated">
 
-# ACME Wizard Maker (install wizards)
+# Generic Company Wizard Maker (install wizards)
 
 Makes install wizards for Windows programs: one self-contained `setup.exe` per program, which installs it
 for the current user (no administrator rights), lists it in **Apps & features** and leaves an
-uninstaller. ACME Inc. is fictional; the wizard maker is the seventh program of its portfolio, and it
+uninstaller. Generic Company Inc. is fictional; the wizard maker is the seventh program of its portfolio, and it
 installs itself the same way.
 
 Go 1.24, standard library only: the windows are native Win32 controls driven through `syscall`, the
@@ -50,13 +50,13 @@ per-monitor DPI); the portfolio's `tools/pixel_icons.py --syso` generates it fro
 
 ```json
 {
-  "id": "ACME.CMS", "name": "ACME Journal", "version": "0.2.0", "publisher": "ACME Inc. (fictional)",
-  "group": "ACME Inc", "icon": "icon/app.ico", "license": "LICENSE",
-  "files": [{"from": "acme-cms.exe"}, {"from": "mock", "to": "mock"}],
+  "id": "GenericCompany.CMS", "name": "Generic Company Journal", "version": "0.2.0", "publisher": "Generic Company Inc. (fictional)",
+  "group": "Generic Company Inc", "icon": "icon/app.ico", "license": "LICENSE",
+  "files": [{"from": "generic-company-cms.exe"}, {"from": "mock", "to": "mock"}],
   "exclude": ["*.pyc", "__pycache__"],
-  "run": {"program": "acme-cms.exe", "args": []},
+  "run": {"program": "generic-company-cms.exe", "args": []},
   "askFolder": true, "shortcuts": {"ask": true, "startMenu": true, "desktop": false},
-  "purge": ["{localappdata}\\ACME Inc\\ACME.CMS"],
+  "purge": ["{localappdata}\\Generic Company Inc\\GenericCompany.CMS"],
   "output": "dist/{name}-{version}-setup.exe"
 }
 ```
@@ -65,7 +65,7 @@ per-monitor DPI); the portfolio's `tools/pixel_icons.py --syso` generates it fro
 |---|---|
 | `id` | The app id: its Apps & features key, and what an upgrade matches on (letters, digits, `.`, `_`, `-`) |
 | `name`, `version`, `publisher` | As shown; `version` is numbers like `1.2.0` |
-| `group` | A folder for the program and for its Start-menu shortcut (`ACME Inc` is where the other ACME programs go) |
+| `group` | A folder for the program and for its Start-menu shortcut (`Generic Company Inc` is where the other Generic Company programs go) |
 | `icon` | An `.ico` for the setup, the shortcuts and Apps & features; by default the program's own icon |
 | `license` | A text file; with one, setup shows a License page and Next waits for "I accept" |
 | `files` | Each `from` (a file, or a folder's contents) goes into the folder `to` of the install folder |
@@ -82,12 +82,12 @@ Paths are relative to `setup.json`, and unknown fields are errors.
 
 `setup.exe` shows the wizard. `setup.exe -quiet` (or `/S`) installs with the defaults and accepts the
 license. It also takes `-dir PATH`, `-desktop-shortcut`, `-no-start-menu`, `-log FILE` and `-root DIR` (a
-sandbox: everything under DIR and the registry in `DIR\registry.json`, like the other ACME programs'
+sandbox: everything under DIR and the registry in `DIR\registry.json`, like the other Generic Company programs'
 `-root`). The uninstaller takes `-quiet`, `-purge`, `-root` and `-log`. Every role also has `-version`
 and `-smoke FILE`, which walks its window, captures each page and writes a report.
 
 A program is installed in `%LOCALAPPDATA%\Programs\<group>\<name>` with an `install.json` marker in the
-other ACME programs' format (plus file hashes), so either installer can take over or remove the other's
+other Generic Company programs' format (plus file hashes), so either installer can take over or remove the other's
 install. Setup never runs as administrator, installs only into a new or empty folder (or the program's
 own), and lets one setup or uninstaller of a program run at a time.
 

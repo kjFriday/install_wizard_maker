@@ -1,4 +1,13 @@
-// ==== ACME Inc. portfolio ===============================================
+// ==== Generic Company Inc. portfolio ====================================
+// Project: install_wizard_maker | File: internal/wizard/uninstall_windows.go
+// About: ==== Generic Company Inc. portfolio ===============================================...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
+// ==== Generic Company Inc. portfolio ===============================================
 // Project: install_wizard_maker | File: internal/wizard/uninstall_windows.go
 // About: Part of package wizard in install_wizard_maker.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
@@ -16,10 +25,10 @@ import (
 	"strings"
 	"sync"
 
-	"acme/wizard/internal/app"
-	"acme/wizard/internal/install"
-	"acme/wizard/internal/sys"
-	"acme/wizard/internal/win"
+	"generic-company/wizard/internal/app"
+	"generic-company/wizard/internal/install"
+	"generic-company/wizard/internal/sys"
+	"generic-company/wizard/internal/win"
 )
 
 // uninstallUI is the uninstaller's window: Confirm, Removing, Done.
@@ -76,7 +85,7 @@ func (ui *uninstallUI) build() {
 	w, info := ui.w, ui.u.Info
 	ui.header(Confirm, "Uninstall "+info.Name, fmt.Sprintf("%s %s will be removed from your computer.", info.Name, info.Version))
 	ui.add(Confirm, w.Label("This removes what setup installed, its shortcuts and its entry in Apps & features. "+
-		"Files you changed or added are kept, and so is any data the ACME programs share.",
+		"Files you changed or added are kept, and so is any data the Generic Company programs share.",
 		win.Rect{X: 20, Y: 72, W: 463, H: 60}, win.Normal, win.Face),
 		w.PathLabel("Folder: "+ui.u.Dir, win.Rect{X: 20, Y: 140, W: 463, H: 20}, win.Face))
 	ui.purge = w.Check(idPurge, "Also remove my &settings for "+info.Name, win.Rect{X: 20, Y: 176, W: 463, H: 24}, win.Face)
@@ -204,4 +213,4 @@ func (ui *uninstallUI) smoke(file string) {
 	s.Write(ui.code)
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=235105db1a191bbedc34e7a9522b5ba81d0af14ba693461583b0f0285c6ac1e2 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=c43255259e2a2e7d0eeff82cad0f4ab9b58f099bc1484561b09e05e8e9658dc8 ====

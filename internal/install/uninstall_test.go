@@ -1,4 +1,13 @@
-// ==== ACME Inc. portfolio ===============================================
+// ==== Generic Company Inc. portfolio ====================================
+// Project: install_wizard_maker | File: internal/install/uninstall_test.go
+// About: ==== Generic Company Inc. portfolio ===============================================...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
+// ==== Generic Company Inc. portfolio ===============================================
 // Project: install_wizard_maker | File: internal/install/uninstall_test.go
 // About: Tests for package install.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
@@ -24,10 +33,10 @@ func TestUninstall(t *testing.T) {
 	s.install(t, "1.0.0", v1, Choices{StartMenu: true, Desktop: true})
 	os.WriteFile(filepath.Join(s.dir(), "README.md"), []byte("my notes"), 0o644) // changed
 	os.WriteFile(filepath.Join(s.dir(), "notes.txt"), []byte("mine"), 0o644)     // the user's own
-	purge := filepath.Join(s.pl.LocalAppData, "ACME Inc", "ACME.Hello")
+	purge := filepath.Join(s.pl.LocalAppData, "Generic Company Inc", "GenericCompany.Hello")
 	os.MkdirAll(purge, 0o755)
 	os.WriteFile(filepath.Join(purge, "settings.json"), []byte("{}"), 0o644)
-	shared := filepath.Join(s.pl.LocalAppData, "ACME Inc", "acme.db")
+	shared := filepath.Join(s.pl.LocalAppData, "Generic Company Inc", "generic_company.db")
 	os.WriteFile(shared, []byte("db"), 0o644)
 	m, _ := ReadMarker(s.dir())
 	self := filepath.Join(s.dir(), "uninstall.exe")
@@ -49,16 +58,16 @@ func TestUninstall(t *testing.T) {
 		}
 		return nil
 	})
-	want := []string{"LocalAppData/ACME Inc/ACME.Hello/settings.json", "LocalAppData/ACME Inc/acme.db",
-		"Programs/ACME Inc/ACME Hello/README.md", "Programs/ACME Inc/ACME Hello/notes.txt",
-		"Programs/ACME Inc/ACME Hello/uninstall.exe"}
+	want := []string{"LocalAppData/Generic Company Inc/GenericCompany.Hello/settings.json", "LocalAppData/Generic Company Inc/generic_company.db",
+		"Programs/Generic Company Inc/Generic Company Hello/README.md", "Programs/Generic Company Inc/Generic Company Hello/notes.txt",
+		"Programs/Generic Company Inc/Generic Company Hello/uninstall.exe"}
 	if !reflect.DeepEqual(left, want) {
 		t.Fatalf("left %v", left)
 	}
-	if _, err := os.Stat(filepath.Join(s.pl.Root, "Start Menu", "ACME Inc")); !errors.Is(err, fs.ErrNotExist) {
+	if _, err := os.Stat(filepath.Join(s.pl.Root, "Start Menu", "Generic Company Inc")); !errors.Is(err, fs.ErrNotExist) {
 		t.Error("empty Start-menu group left behind")
 	}
-	if _, ok := s.reg.keys["ACME.Hello"]; ok {
+	if _, ok := s.reg.keys["GenericCompany.Hello"]; ok {
 		t.Error("registry entry left")
 	}
 	// purge removes only the program's own settings, never the shared database
@@ -84,7 +93,7 @@ func TestUninstallTouchesOnlyItsOwn(t *testing.T) {
 	os.WriteFile(elsewhere, []byte("x"), 0o644)
 	dir := s.dir()
 	os.MkdirAll(dir, 0o755)
-	m := &Marker{AppID: "ACME.Hello", Files: []string{"../../../outside.txt", `C:\Windows\win.ini`, "www"},
+	m := &Marker{AppID: "GenericCompany.Hello", Files: []string{"../../../outside.txt", `C:\Windows\win.ini`, "www"},
 		Shortcuts: []string{elsewhere, `C:\Windows\notepad.exe`},
 		SHA256:    map[string]string{"../../../outside.txt": hash([]byte("x"))}}
 	if _, err := Uninstall(dir, m, UEnv{Places: s.pl, Registry: s.reg}); err != nil {
@@ -149,4 +158,4 @@ func TestDeleteAfterExit(t *testing.T) {
 	t.Fatal("not removed")
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=e4061c942fcf3ec79f5a563c21779fe669348fe626346346b1acba6fc951b640 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=89faaef37935c5517a289777d106ce1149522a41bf415f58f4d30a58eae87f3d ====

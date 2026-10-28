@@ -1,4 +1,13 @@
-// ==== ACME Inc. portfolio ===============================================
+// ==== Generic Company Inc. portfolio ====================================
+// Project: install_wizard_maker | File: internal/maker/form_test.go
+// About: ==== Generic Company Inc. portfolio ===============================================...
+// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
+// You may change this file under the AGPL-3.0. The stamp at the end marks
+// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// Reused code, if any, is mapped in PROVENANCE.md.
+// ========================================================================
+
+// ==== Generic Company Inc. portfolio ===============================================
 // Project: install_wizard_maker | File: internal/maker/form_test.go
 // About: Tests for package maker.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
@@ -14,19 +23,19 @@ import (
 	"reflect"
 	"testing"
 
-	"acme/wizard/internal/spec"
+	"generic-company/wizard/internal/spec"
 )
 
 func TestFormRoundTrip(t *testing.T) {
 	s := spec.New(`C:\work\hello`)
-	s.ID, s.Name, s.Version, s.Publisher, s.Group = "ACME.Hello", "ACME Hello", "1.0.0", "ACME Inc. (fictional)", "ACME Inc"
+	s.ID, s.Name, s.Version, s.Publisher, s.Group = "GenericCompany.Hello", "Generic Company Hello", "1.0.0", "Generic Company Inc. (fictional)", "Generic Company Inc"
 	s.Files = []spec.FileRule{{From: "hello.exe"}, {From: "data", To: "data"}}
 	s.Exclude = []string{"*.pyc", "__pycache__"}
-	s.Run = spec.Run{Program: "hello.exe", Args: []string{"--db", `C:\a b\acme.db`}, AppUserModelID: "ACME.Hello"}
+	s.Run = spec.Run{Program: "hello.exe", Args: []string{"--db", `C:\a b\generic_company.db`}, AppUserModelID: "GenericCompany.Hello"}
 	s.Requires.Python = "3.10"
-	s.Purge = []string{`{localappdata}\ACME Inc\ACME.Hello`}
+	s.Purge = []string{`{localappdata}\Generic Company Inc\GenericCompany.Hello`}
 	f := FormFrom(s)
-	if f.Args != `--db "C:\a b\acme.db"` || f.Exclude != "*.pyc __pycache__" {
+	if f.Args != `--db "C:\a b\generic_company.db"` || f.Exclude != "*.pyc __pycache__" {
 		t.Fatalf("form %+v", f)
 	}
 	back := spec.New(s.Dir())
@@ -77,4 +86,4 @@ func TestRelativize(t *testing.T) {
 	}
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=0a0642f133ad922020abb60c3a27a38cb1f5dab29514c7d2cf22ff185aa2968c ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=1693ab26580c3c2a0936f2a2216b312a00fdfe4d8d463d19b080581e8506bc0b ====
