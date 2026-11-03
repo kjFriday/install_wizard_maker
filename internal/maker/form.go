@@ -1,9 +1,9 @@
 // ==== Generic Company Inc. portfolio ====================================
-// Project: install_wizard_maker | File: internal/maker/form.go
-// About: Part of package maker in install_wizard_maker.
+// Project: wizard_maker | File: internal/maker/form.go
+// About: Part of package maker in wizard_maker.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
-// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
 
@@ -130,4 +130,4 @@ func RuleText(r spec.FileRule) string {
 	return r.From + "  →  " + to
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=69b46a3982808eb2b69d80eaf9d021143075fadf49956dd8e01c3329f4b93d0c ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=6817cae2c91cff9601e812ce26fe0ba3b88b6dbb5603fe6482aea3c96caf5446 ====

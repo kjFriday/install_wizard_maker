@@ -1,9 +1,9 @@
 // ==== Generic Company Inc. portfolio ====================================
-// Project: install_wizard_maker | File: internal/win/draw_windows.go
-// About: Part of package win in install_wizard_maker.
+// Project: wizard_maker | File: internal/win/draw_windows.go
+// About: Part of package win in wizard_maker.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
-// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
 
@@ -254,4 +254,4 @@ func (c *Control) fits() bool {
 	return r.right+pad <= width && r.bottom <= height
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=512b2afec3ac7a00fd361d150c320e9159887061d5b54df92a435e6c0c26d6a5 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=de0dea328b0d4c44b2c5a811d7e10cd73b627839bb0ba8824cb35d10805d6ceb ====

@@ -1,9 +1,9 @@
 // ==== Generic Company Inc. portfolio ====================================
-// Project: install_wizard_maker | File: internal/sys/sys_windows.go
+// Project: wizard_maker | File: internal/sys/sys_windows.go
 // About: Package sys holds the small Windows calls every role needs: a safe DLL search path, a...
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
-// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
 
@@ -70,4 +70,4 @@ func MessageBox(title, text string, icon uint32) {
 	procMessageBox.Call(0, uintptr(unsafe.Pointer(m)), uintptr(unsafe.Pointer(t)), uintptr(icon))
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=c38fb63117bb70dd5e362bc15b5de5fffdf0f22e3e745fe8b92a3c49627ea129 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=59425c4a6dc5b8ebd3994e8aa6c88c17bd9df2f3d1fe99decee0c2f4653e1f0e ====

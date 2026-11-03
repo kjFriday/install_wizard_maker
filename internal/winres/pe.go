@@ -1,9 +1,9 @@
 // ==== Generic Company Inc. portfolio ====================================
-// Project: install_wizard_maker | File: internal/winres/pe.go
-// About: Part of package winres in install_wizard_maker.
+// Project: wizard_maker | File: internal/winres/pe.go
+// About: Part of package winres in wizard_maker.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
-// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
 
@@ -151,4 +151,4 @@ func SetResources(exe []byte, res []Resource) ([]byte, error) {
 
 func alignUp(n, a uint32) uint32 { return (n + a - 1) &^ (a - 1) }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=c24ee8d6230b6d58b5669f4705721dd75fbbd745ff3094e1ce84a277c42de809 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=d1ea14a656d6b80ff7fa88caa5d3d43b2deda13b687b215f94e164f122e42914 ====

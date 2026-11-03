@@ -1,9 +1,9 @@
 // ==== Generic Company Inc. portfolio ====================================
-// Project: install_wizard_maker | File: internal/win/api_windows.go
+// Project: wizard_maker | File: internal/win/api_windows.go
 // About: Package win is a small Win32 toolkit over syscall (no cgo, no libraries): one window...
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
-// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
 
@@ -301,4 +301,4 @@ func instance() uintptr {
 func loword(v uintptr) int { return int(uint16(v)) }
 func hiword(v uintptr) int { return int(uint16(v >> 16)) }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=a4ca6b5f32b39470f2fbd83bf8fcaa2bf25d2ae4dc742513be7a807ac9a51c16 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=1cc940dae01d8a21b53c71b48da8e111b25ed5d0e15b51480795315469ff7b17 ====

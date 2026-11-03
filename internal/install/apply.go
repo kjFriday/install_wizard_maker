@@ -1,9 +1,9 @@
 // ==== Generic Company Inc. portfolio ====================================
-// Project: install_wizard_maker | File: internal/install/apply.go
-// About: Part of package install in install_wizard_maker.
+// Project: wizard_maker | File: internal/install/apply.go
+// About: Part of package install in wizard_maker.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
-// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
 
@@ -454,4 +454,4 @@ func hide(path string) {
 	}
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=9f59ac2a5a3c580ac89a2fc8e988fe1267c3d787e8864b7f317afd6c5961050c ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=b761bed408ac684100df0c27d3e8504b900d5f3eb9daa175bcceb4790eb2373d ====

@@ -1,9 +1,9 @@
 // ==== Generic Company Inc. portfolio ====================================
-// Project: install_wizard_maker | File: internal/winres/winres.go
+// Project: wizard_maker | File: internal/winres/winres.go
 // About: Package winres reads and writes Windows resources: .ico files, icon groups, version info...
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
-// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
 
@@ -366,4 +366,4 @@ func ICOFromResources(res []Resource) ([]byte, error) {
 	return EncodeICO(images), nil
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=ef7cc1f8e32db875f97c4c4297e4c4cc4a6805c4a27fe6ccc7e43f4a4acf466f ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=5baff36d3e289806de7319435659ca33ec1b53188388fc92bbef2b5ad8d31672 ====

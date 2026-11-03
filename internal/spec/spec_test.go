@@ -1,9 +1,9 @@
 // ==== Generic Company Inc. portfolio ====================================
-// Project: install_wizard_maker | File: internal/spec/spec_test.go
+// Project: wizard_maker | File: internal/spec/spec_test.go
 // About: Tests for package spec.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
-// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
 
@@ -246,4 +246,4 @@ func TestManifestCheck(t *testing.T) {
 	}
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=fdbff92ec4e926a115de139ad476ed7957399489a0ee5c26395fb33bc65e31e8 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=bc1e4b42737bd96c82435f978ffec3bf6ac10df8391f1a67ed9593384e52fdca ====

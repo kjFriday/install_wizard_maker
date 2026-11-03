@@ -1,9 +1,9 @@
 // ==== Generic Company Inc. portfolio ====================================
-// Project: install_wizard_maker | File: internal/winres/pe_windows_test.go
+// Project: wizard_maker | File: internal/winres/pe_windows_test.go
 // About: Tests for package winres.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
-// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
 
@@ -158,4 +158,4 @@ func TestSetResourcesLoadsInWindows(t *testing.T) {
 	}
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=7dbb003669d58bf10a5a8b133e658d91c58e43cf2fccf544fe3c834ea1fce34e ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=8d034b872473f786a78db121e13f8669b3fbaafdb3fedde25c1e2290d520a05c ====

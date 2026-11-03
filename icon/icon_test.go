@@ -1,9 +1,9 @@
 // ==== Generic Company Inc. portfolio ====================================
-// Project: install_wizard_maker | File: icon/icon_test.go
+// Project: wizard_maker | File: icon/icon_test.go
 // About: Tests for package icon.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
-// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
 
@@ -75,4 +75,4 @@ func TestPixelExactAndCredited(t *testing.T) {
 	}
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=b7337e1f5151d38d5a47e4ee047a00efda2abb553c8e6ba167ab89dc37610b5b ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=0c899e4bd7ffdf79b614578606f42eb3eca32cf02e08d6a3fddcbe839d2cfdc4 ====

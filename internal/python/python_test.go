@@ -1,9 +1,9 @@
 // ==== Generic Company Inc. portfolio ====================================
-// Project: install_wizard_maker | File: internal/python/python_test.go
+// Project: wizard_maker | File: internal/python/python_test.go
 // About: Tests for package python.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
-// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
 
@@ -98,4 +98,4 @@ func TestFindHere(t *testing.T) {
 	}
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=193d16383f42e4f5751a4fa9cca22981138a0d2e1d1e5838a9ff7efcfe8851e7 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=d503a6b79d3caa1225179891ad38d4f47da9a3e905bb1610bc3feb08f8fbb904 ====

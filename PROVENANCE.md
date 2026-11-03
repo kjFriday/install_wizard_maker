@@ -1,5 +1,10 @@
 # Provenance
 
+Folder names below are as they were at the commits cited. On 2026-11-03 the portfolio was regrouped:
+the seven Generic Company programs moved into `company/` (for example `content_management_system` is
+now `company/journal`), the stand-alone programs into `utilities/`, and the Dev Console and repo tools
+into `tools/`. The root README's Layout section lists every folder.
+
 Nothing here comes from the owner's private staging folder: no installer, Win32 or COM code was among the
 staged originals. A few pieces follow the portfolio's own published Go programs, identified below by
 project, file and commit. Everything else is new.

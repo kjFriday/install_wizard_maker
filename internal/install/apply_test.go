@@ -1,9 +1,9 @@
 // ==== Generic Company Inc. portfolio ====================================
-// Project: install_wizard_maker | File: internal/install/apply_test.go
+// Project: wizard_maker | File: internal/install/apply_test.go
 // About: Tests for package install.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
-// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
 
@@ -260,4 +260,4 @@ func TestApplyRefusals(t *testing.T) {
 
 var v2 = memSource{"hello.exe": []byte("MZ hello 2"), "README.md": []byte("read me"), "data/new.json": []byte("[]")}
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=bc12f748a4dc716c915fad34e3ade6644c1b222d4a98e0c103a3cb4d01ce83aa ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=9dbdec08d397172fa220bf121ae343a9d2b8c61aae900431a1f1cf9fa015c9bf ====

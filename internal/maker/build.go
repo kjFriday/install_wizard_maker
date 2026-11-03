@@ -1,9 +1,9 @@
 // ==== Generic Company Inc. portfolio ====================================
-// Project: install_wizard_maker | File: internal/maker/build.go
+// Project: wizard_maker | File: internal/maker/build.go
 // About: Package maker is the wizard maker itself: Build turns a spec into a setup.exe, Main is...
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
-// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
 
@@ -238,4 +238,4 @@ func human(n int64) string {
 	return fmt.Sprintf("%.1f MB", float64(n)/(1024*1024))
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=eb0f3eac6f8815f7a4f2a13e9fc45eecef1e5fae578535aa0680551577c15c6a ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=89bb94d5d56257b6e5c4ebf0ba30492146779b146804389912f41c22936d8665 ====

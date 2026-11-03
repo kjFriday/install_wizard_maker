@@ -1,9 +1,9 @@
 // ==== Generic Company Inc. portfolio ====================================
-// Project: install_wizard_maker | File: internal/shell/com_windows.go
+// Project: wizard_maker | File: internal/shell/com_windows.go
 // About: Package shell talks to the Windows shell: known folders, .lnk shortcuts (with the...
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
-// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
 
@@ -140,4 +140,4 @@ func fromTaskMem(p *uint16) string {
 	return s
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=ee0b2f4120bf4e5065aacd1948bbd61dab0701fe2c7c07d33ab518962324f3ea ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=82410abea05e236937b923d2eaa8b40dc4d99f82f3631979602215632affb7a2 ====

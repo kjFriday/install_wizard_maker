@@ -1,9 +1,9 @@
 // ==== Generic Company Inc. portfolio ====================================
-// Project: install_wizard_maker | File: internal/install/uninstall.go
-// About: Part of package install in install_wizard_maker.
+// Project: wizard_maker | File: internal/install/uninstall.go
+// About: Part of package install in wizard_maker.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
-// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
 
@@ -152,4 +152,4 @@ func DeleteAfterExit(file string, dirs ...string) error {
 	return cmd.Start()
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=5dc71a542d2357b2cb95067becdc3a4c87dc5b1f21e51c38d87b3517fb3fc51f ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=1c0029bf2f08efd4b0b550d8ecb38059abf7d78d73cc6c4851af931a9d1237e3 ====

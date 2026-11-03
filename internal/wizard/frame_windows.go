@@ -1,9 +1,9 @@
 // ==== Generic Company Inc. portfolio ====================================
-// Project: install_wizard_maker | File: internal/wizard/frame_windows.go
-// About: Part of package wizard in install_wizard_maker.
+// Project: wizard_maker | File: internal/wizard/frame_windows.go
+// About: Part of package wizard in wizard_maker.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
-// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
 
@@ -127,4 +127,4 @@ func (f *frame) flags() map[string]bool {
 	return map[string]bool{"next": f.next.Enabled(), "back": f.back.Enabled()}
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=63a28758fd4dd37a545e47216734e196896aa9d0955aa9eb5f16d2fa0e246cd1 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=18adec9f7f69f12dd3f7d1b10ee77b703225de26cbaec9f5bc6985f0308dd7be ====

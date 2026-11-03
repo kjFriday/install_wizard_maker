@@ -1,9 +1,9 @@
 // ==== Generic Company Inc. portfolio ====================================
-// Project: install_wizard_maker | File: internal/sys/checks_windows.go
-// About: Part of package sys in install_wizard_maker.
+// Project: wizard_maker | File: internal/sys/checks_windows.go
+// About: Part of package sys in wizard_maker.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
-// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
 
@@ -143,4 +143,4 @@ func (o *Output) SetTitle(title string) { o.title = title }
 // Console reports whether text goes to a console or pipe (so no message box is needed).
 func (o *Output) Console() bool { return o.w != nil }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=c49e0c740257af5018d697c9e3524f84f43bacdeec3f16beed4649958eb2db4c ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=663ce2e72e66b59d4fba4127ccaaf1e381f9027282c773c1037f2d156dee3b56 ====

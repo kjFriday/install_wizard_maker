@@ -1,9 +1,9 @@
 // ==== Generic Company Inc. portfolio ====================================
-// Project: install_wizard_maker | File: internal/spec/spec.go
+// Project: wizard_maker | File: internal/spec/spec.go
 // About: Package spec reads and checks setup.json, the description of one install wizard, and...
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
-// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
 
@@ -495,4 +495,4 @@ func CompareVersions(a, b string) int {
 	return 0
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=fdac64cd1d51e03d69d97ff8a63a73f150c64057e2c5453751baa8c106bac08c ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=969e14e5d58387be404e7d34b68ed038bbc210220cc1c60d66713826e0c3de51 ====

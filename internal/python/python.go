@@ -1,9 +1,9 @@
 // ==== Generic Company Inc. portfolio ====================================
-// Project: install_wizard_maker | File: internal/python/python.go
+// Project: wizard_maker | File: internal/python/python.go
 // About: Package python finds an installed CPython the way PEP 514 says to: under PythonCore in...
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
-// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
 
@@ -106,4 +106,4 @@ func parse(s string) ([2]int, bool) {
 
 func less(a, b [2]int) bool { return a[0] < b[0] || (a[0] == b[0] && a[1] < b[1]) }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=6650225c18d8f425e694b32b5024b2942d77a1c10bdf2f0d4d28bf7a24c0fcb0 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=8dbfe1ff0fc9185721786acd84c30696448715176bddd77a69609487a1d6cec7 ====

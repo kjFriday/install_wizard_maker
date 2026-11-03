@@ -1,9 +1,9 @@
 // ==== Generic Company Inc. portfolio ====================================
-// Project: install_wizard_maker | File: internal/spec/manifest.go
-// About: Part of package spec in install_wizard_maker.
+// Project: wizard_maker | File: internal/spec/manifest.go
+// About: Part of package spec in wizard_maker.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
-// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
 
@@ -178,4 +178,4 @@ func PurgePath(p, localAppData, appData string) (string, error) {
 	return out, nil
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=5f821b6b5b2aa9732fb52f1cc9a98813756a4a961c02dab992262132b53b445b ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=266de99449855acff442dbec8f349eb64f039ef4d2ebb0f56450e12ad8923cf7 ====

@@ -1,9 +1,9 @@
 // ==== Generic Company Inc. portfolio ====================================
-// Project: install_wizard_maker | File: main.go
+// Project: wizard_maker | File: main.go
 // About: Generic Company Wizard Maker makes install wizards: one self-contained setup.exe per...
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
-// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
+// the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
 
@@ -68,4 +68,4 @@ func run(args []string) int {
 	return maker.Main(self, args)
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=d8b5ae096d4a1767b34ae472d3648526fe06befa643fa7297f20f1d7de3d3edf ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=3f06e265c27371841e7432915cb578170ab482ee72506bb437cb3f9726f06fed ====
