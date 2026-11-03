@@ -1,14 +1,5 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: install_wizard_maker | File: internal/wizard/uninstall_windows.go
-// About: ==== Generic Company Inc. portfolio ===============================================...
-// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
-// You may change this file under the AGPL-3.0. The stamp at the end marks
-// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
-// Reused code, if any, is mapped in PROVENANCE.md.
-// ========================================================================
-
-// ==== Generic Company Inc. portfolio ===============================================
-// Project: install_wizard_maker | File: internal/wizard/uninstall_windows.go
 // About: Part of package wizard in install_wizard_maker.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
@@ -213,4 +204,4 @@ func (ui *uninstallUI) smoke(file string) {
 	s.Write(ui.code)
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=c43255259e2a2e7d0eeff82cad0f4ab9b58f099bc1484561b09e05e8e9658dc8 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=7e24835532b400d88755f41ccbf94dad2383d7c374cd99d4acfe2d88c2fddff0 ====

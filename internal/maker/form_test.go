@@ -1,14 +1,5 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: install_wizard_maker | File: internal/maker/form_test.go
-// About: ==== Generic Company Inc. portfolio ===============================================...
-// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
-// You may change this file under the AGPL-3.0. The stamp at the end marks
-// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
-// Reused code, if any, is mapped in PROVENANCE.md.
-// ========================================================================
-
-// ==== Generic Company Inc. portfolio ===============================================
-// Project: install_wizard_maker | File: internal/maker/form_test.go
 // About: Tests for package maker.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
@@ -86,4 +77,4 @@ func TestRelativize(t *testing.T) {
 	}
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=1693ab26580c3c2a0936f2a2216b312a00fdfe4d8d463d19b080581e8506bc0b ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=60d664b4b71cf7ad485b0ec60333f00ecd3d6169f1398a74b2f6c5aa73626424 ====

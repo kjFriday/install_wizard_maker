@@ -1,14 +1,5 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: install_wizard_maker | File: internal/maker/self.go
-// About: ==== Generic Company Inc. portfolio ===============================================...
-// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
-// You may change this file under the AGPL-3.0. The stamp at the end marks
-// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
-// Reused code, if any, is mapped in PROVENANCE.md.
-// ========================================================================
-
-// ==== Generic Company Inc. portfolio ===============================================
-// Project: install_wizard_maker | File: internal/maker/self.go
 // About: Part of package maker in install_wizard_maker.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
@@ -193,4 +184,4 @@ func startUninstaller(exe string) error {
 	return exec.Command(exe).Start()
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=7ffcf39a91821016e6342d7914ea5cdc5386ce1fe890c8d63c737f007ffb329f ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=ac493fd6b54c2f45ed422a03095847e8d221b2a8d8b22af78c9f71f5189b69a1 ====

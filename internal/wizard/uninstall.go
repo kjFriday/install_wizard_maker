@@ -1,14 +1,5 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: install_wizard_maker | File: internal/wizard/uninstall.go
-// About: ==== Generic Company Inc. portfolio ===============================================...
-// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
-// You may change this file under the AGPL-3.0. The stamp at the end marks
-// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
-// Reused code, if any, is mapped in PROVENANCE.md.
-// ========================================================================
-
-// ==== Generic Company Inc. portfolio ===============================================
-// Project: install_wizard_maker | File: internal/wizard/uninstall.go
 // About: Part of package wizard in install_wizard_maker.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
@@ -166,4 +157,4 @@ func RunUninstall(self string, p *payload.File, args []string) int {
 	return app.ExitOK
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=6fa50689988879414b8720eea049d2dcf85ba23fea5b6d244a6eebf3a2c0a8aa ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=be3893fe302b1f9867be26083f3c4f39526df28c56de0407ade30524255422c5 ====

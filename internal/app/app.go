@@ -1,14 +1,5 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: install_wizard_maker | File: internal/app/app.go
-// About: ==== Generic Company Inc. portfolio ===============================================...
-// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
-// You may change this file under the AGPL-3.0. The stamp at the end marks
-// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
-// Reused code, if any, is mapped in PROVENANCE.md.
-// ========================================================================
-
-// ==== Generic Company Inc. portfolio ===============================================
-// Project: install_wizard_maker | File: internal/app/app.go
 // About: Package app is the wizard maker's identity (name, id, version, credit) and the exit codes...
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
@@ -41,4 +32,4 @@ const (
 	ExitRefused   = 4 // refused: downgrade, foreign folder, file in use, elevated, Python missing
 )
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=4c5f900e390213b04a860fecd5a449fb1492a1839ae986ec2a1ed5a9c9c13a04 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=1ce2fe63a9322789e87628007b8241a88c966836c9501567564739e3ac4950ad ====

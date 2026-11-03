@@ -1,14 +1,5 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: install_wizard_maker | File: internal/win/window_windows.go
-// About: ==== Generic Company Inc. portfolio ===============================================...
-// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
-// You may change this file under the AGPL-3.0. The stamp at the end marks
-// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
-// Reused code, if any, is mapped in PROVENANCE.md.
-// ========================================================================
-
-// ==== Generic Company Inc. portfolio ===============================================
-// Project: install_wizard_maker | File: internal/win/window_windows.go
 // About: Part of package win in install_wizard_maker.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
@@ -728,4 +719,4 @@ type MenuItem struct {
 	Text string
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=8c18ecf9799dcbbc75133a111e530cd99d7cf29aac394952af2888004fb8685b ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=c9af570e7b313def62a53e6d0af2b8f240d800aa8dd3aee40c2fd0042be5cd78 ====

@@ -1,14 +1,5 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: install_wizard_maker | File: internal/maker/self_test.go
-// About: ==== Generic Company Inc. portfolio ===============================================...
-// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
-// You may change this file under the AGPL-3.0. The stamp at the end marks
-// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
-// Reused code, if any, is mapped in PROVENANCE.md.
-// ========================================================================
-
-// ==== Generic Company Inc. portfolio ===============================================
-// Project: install_wizard_maker | File: internal/maker/self_test.go
 // About: Tests for package maker.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
@@ -117,4 +108,4 @@ func tree(t *testing.T, root string) map[string]string {
 	return files
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=f2d90b23fc5ff1eb9b308a69f9747608598c3189fd553b8c8a7c595bbc23c04a ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=9202397f3e6702c394a69c61f3bc7721759832d6ea9396469bdc07a8beaae232 ====

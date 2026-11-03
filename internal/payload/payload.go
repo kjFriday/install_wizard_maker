@@ -1,14 +1,5 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: install_wizard_maker | File: internal/payload/payload.go
-// About: ==== Generic Company Inc. portfolio ===============================================...
-// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
-// You may change this file under the AGPL-3.0. The stamp at the end marks
-// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
-// Reused code, if any, is mapped in PROVENANCE.md.
-// ========================================================================
-
-// ==== Generic Company Inc. portfolio ===============================================
-// Project: install_wizard_maker | File: internal/payload/payload.go
 // About: Package payload is the part of a setup.exe after the program itself: a zip of everything...
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
@@ -312,4 +303,4 @@ func (p *File) StubBytes() ([]byte, error) {
 	return b, err
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=477e5e9b6a8fb941696f8ce2e0e1d2ef0a03ac8929e7b2cc66b3255a6732bdac ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=8df2d65714de240697d4ea75d12b5a436e93b93fb8640a749c547795bae60603 ====

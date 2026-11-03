@@ -1,14 +1,5 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: install_wizard_maker | File: internal/testexe/testexe.go
-// About: ==== Generic Company Inc. portfolio ===============================================...
-// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
-// You may change this file under the AGPL-3.0. The stamp at the end marks
-// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
-// Reused code, if any, is mapped in PROVENANCE.md.
-// ========================================================================
-
-// ==== Generic Company Inc. portfolio ===============================================
-// Project: install_wizard_maker | File: internal/testexe/testexe.go
 // About: Package testexe builds the wizard maker once for a test binary, as released (-trimpath...
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
@@ -98,4 +89,4 @@ func moduleRoot() string {
 	return filepath.Dir(strings.TrimSpace(string(out)))
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=658bbb0f8db701d4710cae54927992979f922d6b05346efd639524e1792737d6 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=f4ec8e7d47b74c1248a9a7b67fb57fc01f82e1defeefa4617ded56813d8f2cbe ====

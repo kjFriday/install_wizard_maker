@@ -1,14 +1,5 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: install_wizard_maker | File: internal/reg/file.go
-// About: ==== Generic Company Inc. portfolio ===============================================...
-// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
-// You may change this file under the AGPL-3.0. The stamp at the end marks
-// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
-// Reused code, if any, is mapped in PROVENANCE.md.
-// ========================================================================
-
-// ==== Generic Company Inc. portfolio ===============================================
-// Project: install_wizard_maker | File: internal/reg/file.go
 // About: Package reg is the Apps & features entry: the per-user Uninstall key in the real...
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
@@ -123,4 +114,4 @@ func (f File) Delete(id string) error {
 	return f.save(data)
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=4797523be9a6bf3112dc9c682147b6a41bb565f8824cc7283472961e215742c2 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=ff2fd2ccf52c5663b21058aba06106ba95d28c8533a481cf47dffdb335825ca7 ====

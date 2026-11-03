@@ -1,14 +1,5 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: install_wizard_maker | File: internal/shell/link_windows.go
-// About: ==== Generic Company Inc. portfolio ===============================================...
-// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
-// You may change this file under the AGPL-3.0. The stamp at the end marks
-// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
-// Reused code, if any, is mapped in PROVENANCE.md.
-// ========================================================================
-
-// ==== Generic Company Inc. portfolio ===============================================
-// Project: install_wizard_maker | File: internal/shell/link_windows.go
 // About: Part of package shell in install_wizard_maker.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
@@ -216,4 +207,4 @@ func MakeLinkDir(s install.Shortcut) error {
 	return nil
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=873df85089c0ae76e29a76cc1aa725385d0e61f3bf2ed08e64010c34f9222ecb ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=3397bd6cb52c9dcd9f17a879b457512153f42d5b8378d1fa0aba127008af7f59 ====

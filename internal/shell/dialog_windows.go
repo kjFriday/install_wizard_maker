@@ -1,14 +1,5 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: install_wizard_maker | File: internal/shell/dialog_windows.go
-// About: ==== Generic Company Inc. portfolio ===============================================...
-// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
-// You may change this file under the AGPL-3.0. The stamp at the end marks
-// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
-// Reused code, if any, is mapped in PROVENANCE.md.
-// ========================================================================
-
-// ==== Generic Company Inc. portfolio ===============================================
-// Project: install_wizard_maker | File: internal/shell/dialog_windows.go
 // About: Part of package shell in install_wizard_maker.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
@@ -177,4 +168,4 @@ func Open(file, args, dir string) error {
 	return nil
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=01f2de7c43d320a2859ffa0b28c544311a1a0788083efedbb631149fb9967fef ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=2808a5b1785d50a0b23285606a4761dd8035cd70ba7a8bc3fe8af0bb7696744c ====

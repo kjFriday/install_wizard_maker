@@ -1,14 +1,5 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: install_wizard_maker | File: internal/install/uninstall_test.go
-// About: ==== Generic Company Inc. portfolio ===============================================...
-// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
-// You may change this file under the AGPL-3.0. The stamp at the end marks
-// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
-// Reused code, if any, is mapped in PROVENANCE.md.
-// ========================================================================
-
-// ==== Generic Company Inc. portfolio ===============================================
-// Project: install_wizard_maker | File: internal/install/uninstall_test.go
 // About: Tests for package install.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
@@ -158,4 +149,4 @@ func TestDeleteAfterExit(t *testing.T) {
 	t.Fatal("not removed")
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=89faaef37935c5517a289777d106ce1149522a41bf415f58f4d30a58eae87f3d ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=e2551aa4151227e731e01b4118e8b476783775a7939cbd8537c9f73ac7f4f3fd ====

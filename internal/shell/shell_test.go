@@ -1,14 +1,5 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: install_wizard_maker | File: internal/shell/shell_test.go
-// About: ==== Generic Company Inc. portfolio ===============================================...
-// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
-// You may change this file under the AGPL-3.0. The stamp at the end marks
-// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
-// Reused code, if any, is mapped in PROVENANCE.md.
-// ========================================================================
-
-// ==== Generic Company Inc. portfolio ===============================================
-// Project: install_wizard_maker | File: internal/shell/shell_test.go
 // About: Tests for package shell.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
@@ -79,4 +70,4 @@ func TestShortcutRoundTrip(t *testing.T) {
 	}
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=dc08d28c10dc24266e0cba773c41cde0f419c9e5dcbb798ba1764d1b519d0e65 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=c4b8757ef318e2032a4f5c3825775f60b1a4569a484e019a7fc13af201e1a599 ====

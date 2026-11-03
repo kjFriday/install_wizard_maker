@@ -1,14 +1,5 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: install_wizard_maker | File: internal/install/registry.go
-// About: ==== Generic Company Inc. portfolio ===============================================...
-// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
-// You may change this file under the AGPL-3.0. The stamp at the end marks
-// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
-// Reused code, if any, is mapped in PROVENANCE.md.
-// ========================================================================
-
-// ==== Generic Company Inc. portfolio ===============================================
-// Project: install_wizard_maker | File: internal/install/registry.go
 // About: Part of package install in install_wizard_maker.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
@@ -61,4 +52,4 @@ type Registry interface {
 // UninstallKey is the key under HKEY_CURRENT_USER where id's entry lives.
 func UninstallKey(id string) string { return uninstallKey + `\` + id }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=dc7767e02284855877dfc2524d76f46e45dd75235cac3126826b3ce11a105288 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=a82d5ddd1a503562c7e14fa822114102cf154a81814352710eed2e40e32eb310 ====

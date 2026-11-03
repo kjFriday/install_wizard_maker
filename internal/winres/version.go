@@ -1,14 +1,5 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: install_wizard_maker | File: internal/winres/version.go
-// About: ==== Generic Company Inc. portfolio ===============================================...
-// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
-// You may change this file under the AGPL-3.0. The stamp at the end marks
-// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
-// Reused code, if any, is mapped in PROVENANCE.md.
-// ========================================================================
-
-// ==== Generic Company Inc. portfolio ===============================================
-// Project: install_wizard_maker | File: internal/winres/version.go
 // About: Part of package winres in install_wizard_maker.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
@@ -195,4 +186,4 @@ func fromUTF16(b []byte) string {
 	return string(utf16.Decode(u))
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=78b0668446eacd1f21a2042ea2beb8356377eaf211a09c76dab9bd0f38ef6ca1 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=358872f5d84e18b652e23e5a2ef0df75f7cb6d483d9fcf2c98fc444f4fb46c9b ====

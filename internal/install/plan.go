@@ -1,14 +1,5 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: install_wizard_maker | File: internal/install/plan.go
-// About: ==== Generic Company Inc. portfolio ===============================================...
-// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
-// You may change this file under the AGPL-3.0. The stamp at the end marks
-// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
-// Reused code, if any, is mapped in PROVENANCE.md.
-// ========================================================================
-
-// ==== Generic Company Inc. portfolio ===============================================
-// Project: install_wizard_maker | File: internal/install/plan.go
 // About: Package install puts a setup's files in place for the current user, and takes them away...
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
@@ -371,4 +362,4 @@ func Existing(reg Registry, pl Places, id, group, name string) (dir string, m *M
 	return "", nil
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=ed5a5a3e5613fd386814964fcbe9da64324588d79538d914d3dee6c2e1d5c738 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=8a3b8d12d40698a3345a4f8e3dc848b033cdd9212a0bf87042e4a8f086bb8dfa ====

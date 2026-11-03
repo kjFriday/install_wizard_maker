@@ -1,14 +1,5 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: install_wizard_maker | File: internal/install/apply_test.go
-// About: ==== Generic Company Inc. portfolio ===============================================...
-// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
-// You may change this file under the AGPL-3.0. The stamp at the end marks
-// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
-// Reused code, if any, is mapped in PROVENANCE.md.
-// ========================================================================
-
-// ==== Generic Company Inc. portfolio ===============================================
-// Project: install_wizard_maker | File: internal/install/apply_test.go
 // About: Tests for package install.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
@@ -269,4 +260,4 @@ func TestApplyRefusals(t *testing.T) {
 
 var v2 = memSource{"hello.exe": []byte("MZ hello 2"), "README.md": []byte("read me"), "data/new.json": []byte("[]")}
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=857b4e841932e9a362209e7e77b4a0a2610ccdfa2c252c3a151f1f1dfd069bc8 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=bc12f748a4dc716c915fad34e3ade6644c1b222d4a98e0c103a3cb4d01ce83aa ====

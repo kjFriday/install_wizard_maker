@@ -1,14 +1,5 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: install_wizard_maker | File: internal/wizard/setup.go
-// About: ==== Generic Company Inc. portfolio ===============================================...
-// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
-// You may change this file under the AGPL-3.0. The stamp at the end marks
-// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
-// Reused code, if any, is mapped in PROVENANCE.md.
-// ========================================================================
-
-// ==== Generic Company Inc. portfolio ===============================================
-// Project: install_wizard_maker | File: internal/wizard/setup.go
 // About: Package wizard is what a built setup.exe runs (the install wizard) and the uninstall.exe...
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
@@ -290,4 +281,4 @@ func quietSetup(s *Setup, out *sys.Output) int {
 	return app.ExitOK
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=1fa5224645be6b1f19b2cc059d8f6323b0a3dc6477eb420e54e913b09232744f ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=7338eb566ca522d62c19f74a400d0c7e98b3a4d793a5d0d0f36e66556a6617b7 ====

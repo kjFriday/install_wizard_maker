@@ -1,14 +1,5 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: install_wizard_maker | File: internal/maker/cli.go
-// About: ==== Generic Company Inc. portfolio ===============================================...
-// Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
-// You may change this file under the AGPL-3.0. The stamp at the end marks
-// the version kjFriday wrote. Verify with the portfolio's stamp.py --check.
-// Reused code, if any, is mapped in PROVENANCE.md.
-// ========================================================================
-
-// ==== Generic Company Inc. portfolio ===============================================
-// Project: install_wizard_maker | File: internal/maker/cli.go
 // About: Part of package maker in install_wizard_maker.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
@@ -154,4 +145,4 @@ func aliasQuiet(args []string) []string {
 	return out
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=7691057f53306546c72a288930a4b4d6cf768066d347cfff3b0664bf08f95ad4 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=ddebef44b3e7e50cac80a5a893da16b6a910a75a8a18711740d2988616206910 ====
