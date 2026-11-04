@@ -1,11 +1,15 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: wizard_maker | File: internal/maker/form_test.go
-// About: Tests for package maker.
+// About: Tests for the window's form (form.go): round trips, argument quoting and paths.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
 // the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
+
+// Tests for the window's form (form.go): round trips, argument quoting and paths.
+//
+// These run without a window: Form is plain data, so the round trips can be checked directly.
 
 package maker
 
@@ -17,6 +21,10 @@ import (
 	"generic-company/wizard/internal/spec"
 )
 
+// TestFormRoundTrip pins that FormFrom then Apply gives back the same spec, that an argument with a
+// space is shown quoted, and that Exclude accepts spaces, commas and semicolons as separators. The
+// fields the window does not show (AppUserModelID, Requires, Purge) are copied over by hand first,
+// since Apply leaves them alone.
 func TestFormRoundTrip(t *testing.T) {
 	s := spec.New(`C:\work\hello`)
 	s.ID, s.Name, s.Version, s.Publisher, s.Group = "GenericCompany.Hello", "Generic Company Hello", "1.0.0", "Generic Company Inc. (fictional)", "Generic Company Inc"
@@ -42,6 +50,8 @@ func TestFormRoundTrip(t *testing.T) {
 	}
 }
 
+// TestArgs pins SplitArgs on the empty line, quoted spaces, runs of blanks, an empty quoted
+// argument and a {app} placeholder path, and that JoinArgs then SplitArgs gives the same arguments.
 func TestArgs(t *testing.T) {
 	for line, want := range map[string][]string{
 		``:                       nil,
@@ -60,6 +70,8 @@ func TestArgs(t *testing.T) {
 	}
 }
 
+// TestRelativize pins that Relativize turns paths inside the folder into slash paths and leaves a
+// path outside it absolute, and that Absolutize resolves relative paths against the spec's folder.
 func TestRelativize(t *testing.T) {
 	dir := filepath.Join(t.TempDir(), "project")
 	s := spec.New(dir)
@@ -77,4 +89,4 @@ func TestRelativize(t *testing.T) {
 	}
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=fbd40fca6fa68bf8b30048bddcdec7207205195f39a1704ac47890a977e3f145 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=b4dbc76db2d4b5ec88deca1c67e72e333500f5f945244a50525d1a5b80710f61 ====

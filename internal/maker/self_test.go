@@ -1,11 +1,17 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: wizard_maker | File: internal/maker/self_test.go
-// About: Tests for package maker.
+// About: Tests for the maker installing and uninstalling itself (self.go).
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
 // the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
+
+// Tests for the maker installing and uninstalling itself (self.go).
+//
+// TestRunsFrom pins the path test that decides whether a copy runs from its own install folder.
+// TestUninstallSelf drives the real maker exe (the run helper in build_test.go) in a -root sandbox:
+// install, refuse to uninstall from inside, then uninstall from outside.
 
 package maker
 
@@ -20,6 +26,8 @@ import (
 	"generic-company/wizard/internal/install"
 )
 
+// TestRunsFrom pins runsFrom: the folder itself, a different case and a subfolder are inside; a
+// sibling whose name merely starts the same ("... 2") and the parent folder are not.
 func TestRunsFrom(t *testing.T) {
 	dir := filepath.Join(t.TempDir(), "Generic Company Wizard Maker")
 	for _, c := range []struct {
@@ -39,6 +47,14 @@ func TestRunsFrom(t *testing.T) {
 }
 
 // The installed copy refuses to uninstall itself and changes nothing; another copy uninstalls it fully.
+//
+// Steps:
+//  1. Install into a sandbox root and check the exe, its install.json marker and registry.json exist.
+//  2. Check selfUninstaller finds the same uninstall.exe for both copies and flags only the installed one.
+//  3. Run -uninstall from the installed copy: it must exit with app.ExitRefused, name the uninstaller,
+//     and leave every file under root byte for byte as it was.
+//  4. Run -uninstall from the test's maker exe: the install must be gone and selfUninstaller must
+//     report that nothing is installed.
 func TestUninstallSelf(t *testing.T) {
 	root := t.TempDir()
 	if out, code := run(t, root, "-install", "-quiet", "-root", root); code != app.ExitOK {
@@ -90,7 +106,8 @@ func TestUninstallSelf(t *testing.T) {
 	}
 }
 
-// tree maps every file under root to its contents.
+// tree maps every file under root to its contents (folders are left out), so two snapshots can be
+// compared for any added, removed or changed file.
 func tree(t *testing.T, root string) map[string]string {
 	t.Helper()
 	files := map[string]string{}
@@ -108,4 +125,4 @@ func tree(t *testing.T, root string) map[string]string {
 	return files
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=6b536d6f94bb3fedcaa14bf0edc6a667a5a89ebb87b4ea7e9ece7e13edb5ef5a ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=006c924b77ac8cdc5c85d4d33661ae07372df437bfb2d6970538bac4b5db73f9 ====

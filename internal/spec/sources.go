@@ -8,6 +8,11 @@
 // ========================================================================
 
 // Sources walks a spec's file rules: every file to pack, and where it is installed.
+//
+// Check calls Sources to vet the rules, the maker's build packs what it returns, and the maker's
+// form lists it. A file rule names one file (installed as To/<its name>) or a folder (its contents
+// installed under To, keeping their relative paths). Exclude patterns apply inside folder rules
+// only; a rule that names a single file is always packed.
 
 package spec
 
@@ -26,13 +31,26 @@ import (
 type Source struct {
 	Path string // installed path: slash-separated, relative to the install folder
 	Abs  string // the file on this computer
-	Size int64
+	Size int64  // bytes, when the walk saw it
 }
 
 // Sources walks the file rules: every file to pack, sorted by installed path.
+//
+// It reads the disk but writes nothing. The first problem stops the walk: a rule without "from", a
+// bad "to", a missing source, an invalid installed path, or two sources landing on one installed
+// path (compared ignoring case, as Windows would overwrite one with the other). No files at all is
+// an error too. Links are followed to their files; the sort is by byte order of Path.
+//
+// Steps:
+//  1. For each rule, check "to" and stat "from".
+//  2. A file goes straight in under "to".
+//  3. A folder is walked; excluded names are skipped (a whole folder at once), and every regular
+//     file goes in under "to" with its path relative to the folder.
+//  4. Sort the result by installed path.
 func (s *Spec) Sources() ([]Source, error) {
 	var out []Source
-	seen := map[string]string{}
+	seen := map[string]string{} // lower-cased installed path -> the source file that claimed it
+	// add records one file after checking its installed path and that no other file claimed it
 	add := func(dest, abs string, size int64) error {
 		if err := CheckInstalledPath(dest); err != nil {
 			return fmt.Errorf("files: %s: %w", dest, err)
@@ -85,6 +103,7 @@ func (s *Spec) Sources() ([]Source, error) {
 				return nil
 			}
 			info, err := os.Stat(p) // follows a link to a file
+			// a broken link fails the walk; anything else that is not a regular file is skipped
 			if err != nil || !info.Mode().IsRegular() {
 				return err
 			}
@@ -101,7 +120,11 @@ func (s *Spec) Sources() ([]Source, error) {
 	return out, nil
 }
 
-// excluded: a pattern without "/" matches any file or folder name, one with "/" the whole relative path.
+// excluded reports whether rel (slash-separated, relative to the rule's folder) is left out.
+//
+// A pattern without "/" matches any file or folder name, one with "/" the whole relative path.
+// Patterns use path.Match syntax (*, ?, [a-z]) and ignore case; "*" never crosses a "/". A bad
+// pattern matches nothing here, and Check reports it.
 func (s *Spec) excluded(rel string) bool {
 	for _, p := range s.Exclude {
 		target := path.Base(rel)
@@ -115,4 +138,4 @@ func (s *Spec) excluded(rel string) bool {
 	return false
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=40f25026aa6622e1cfbc51f88e04c48a35a6108c6d3c0062cbb8b87041943533 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=063c9214f4c496a9781fd95330832e388f004c2c1626c9fbfc2f18d0cbc248d1 ====

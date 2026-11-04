@@ -1,11 +1,23 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: wizard_maker | File: internal/winres/pe.go
-// About: Part of package winres in wizard_maker.
+// About: Just enough PE32+ parsing to read and replace a 64-bit program's resource section.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
 // the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
+
+// Just enough PE32+ parsing to read and replace a 64-bit program's resource section.
+//
+// A Windows exe (Portable Executable, "PE") starts with an MS-DOS header whose e_lfanew field points
+// at the "PE\0\0" signature. After it come the COFF file header (how many sections), the optional
+// header (alignments, image size, checksum, subsystem, and the data directories that locate things
+// such as the resources and the signature) and the section table. This file reads only those fields.
+//
+// Resources reads the resources; SetResources writes new ones. Rewriting is simple only because the
+// resource section is the last one, in the file and in memory: it can grow or shrink without moving
+// any other section, so no code or address elsewhere needs fixing. Go's linker puts .rsrc (from the
+// .syso) last, and pe_windows_test.go checks that it still does.
 
 package winres
 
@@ -16,10 +28,10 @@ import (
 
 // pe holds the offsets of the PE header fields this package reads or patches.
 type pe struct {
-	opt                  int // optional header
-	sections             int // first section header
-	count                int
-	fileAlign, sectAlign uint32
+	opt                  int    // optional header
+	sections             int    // first section header
+	count                int    // NumberOfSections
+	fileAlign, sectAlign uint32 // FileAlignment (section sizes in the file), SectionAlignment (in memory)
 }
 
 // The PE32+ layout, after Microsoft's "PE Format": offsets into the MS-DOS header, the COFF file header,
@@ -57,6 +69,14 @@ const (
 	subsystemGUI = 2 // IMAGE_SUBSYSTEM_WINDOWS_GUI
 )
 
+// parsePE finds the headers of a 64-bit (PE32+) program and checks they lie inside b.
+//
+// Steps:
+//  1. "MZ" and e_lfanew lead to the "PE\0\0" signature; the COFF header follows it.
+//  2. The optional header follows the COFF header, and the section table follows the optional
+//     header (SizeOfOptionalHeader bytes later).
+//  3. The optional header's Magic must be 0x20b (PE32+): the field offsets here are PE32+ ones.
+//  4. FileAlignment must be a power of two (alignUp relies on it) and SectionAlignment non-zero.
 func parsePE(b []byte) (pe, error) {
 	if len(b) < dosHeaderSize || b[0] != 'M' || b[1] != 'Z' {
 		return pe{}, errors.New("not a Windows program")
@@ -82,6 +102,8 @@ func parsePE(b []byte) (pe, error) {
 	return h, nil
 }
 
+// dir is data directory i (dirResource, dirSecurity ...): its address and size, both 0 when unused.
+// For the security directory the "address" is a file offset, as the PE format defines it.
 func (h pe) dir(b []byte, i int) (rva, size uint32) {
 	at := h.opt + optDataDirs + dataDirSize*i
 	return le.Uint32(b[at:]), le.Uint32(b[at+4:])
@@ -89,6 +111,9 @@ func (h pe) dir(b []byte, i int) (rva, size uint32) {
 
 // rsrc finds the section holding the resource directory and checks it is the last one, in the section
 // table, in the file and in memory, so it can grow without moving anything else.
+//
+// header is the file offset of the section's header. A section holds the directory when its address
+// range, the larger of VirtualSize and SizeOfRawData, contains the directory's address.
 func (h pe) rsrc(b []byte) (header int, err error) {
 	rva, _ := h.dir(b, dirResource)
 	if rva == 0 {
@@ -112,6 +137,9 @@ func (h pe) rsrc(b []byte) (header int, err error) {
 }
 
 // Resources reads a PE file's resources.
+//
+// A program with no resource directory gives none and no error. The section is found by its file
+// size (SizeOfRawData), and the tree is decoded from the directory's place in it.
 func Resources(exe []byte) ([]Resource, error) {
 	h, err := parsePE(exe)
 	if err != nil {
@@ -138,6 +166,20 @@ func Resources(exe []byte) ([]Resource, error) {
 // SetResources returns exe with its resources replaced by res. The resource section must be the last
 // one (Go's linker always puts it there). Whatever followed the sections (a payload, a signature) is
 // dropped, the security directory and checksum are cleared, and the subsystem is set to GUI.
+//
+// exe is not changed; the result is a new slice. The same exe and res always give the same bytes.
+//
+// Steps:
+//  1. Find the resource section (rsrc) and check the directory starts at its very start, so the new
+//     section can be written from there.
+//  2. Encode res for the section's address and pad it to FileAlignment.
+//  3. Copy everything before the section, then the new section; nothing after it is kept.
+//  4. Patch the section header's sizes, SizeOfInitializedData (when the section counts as
+//     initialised data), SizeOfImage (the section's end rounded to SectionAlignment), and the
+//     resource directory.
+//  5. Zero the checksum (only drivers and boot files need one) and the security directory: an
+//     Authenticode signature, if any, was in the dropped tail and would not match anyway.
+//  6. Set the subsystem to GUI, so a setup.exe opens no console window.
 func SetResources(exe []byte, res []Resource) ([]byte, error) {
 	h, err := parsePE(exe)
 	if err != nil {
@@ -177,6 +219,8 @@ func SetResources(exe []byte, res []Resource) ([]byte, error) {
 	return out, nil
 }
 
+// alignUp rounds n up to a multiple of a, which must be a power of two: adding a-1 and clearing the
+// low bits (&^ is AND NOT) lands on the next multiple.
 func alignUp(n, a uint32) uint32 { return (n + a - 1) &^ (a - 1) }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=5795aac61efdf055de34a596706136ec110e6a683531229206d3b5c0dbd207bf ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=878872200d8da6de5c8e6f43e12ede95cd817754cc65ec3aacbc70483cd71169 ====

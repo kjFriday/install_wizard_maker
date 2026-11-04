@@ -1,11 +1,17 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: wizard_maker | File: internal/maker/build_test.go
-// About: Tests for package maker.
+// About: Tests for Build and the build command line, on a real maker exe built by testexe.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
 // the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
+
+// Tests for Build and the build command line, on a real maker exe built by testexe.
+//
+// They are slow (the exe is built once per test binary) and are skipped with -short. The fixture
+// folder is testdata/fixture with the maker itself as its hello.exe, so the packed program has an
+// icon of its own.
 
 package maker
 
@@ -26,12 +32,15 @@ import (
 	"generic-company/wizard/internal/winres"
 )
 
+// TestMain runs the tests, then removes the maker exe testexe built for them.
 func TestMain(m *testing.M) {
 	code := m.Run()
 	testexe.Cleanup()
 	os.Exit(code)
 }
 
+// build loads dir's setup.json and builds it with the test maker as the stub, logging to t. Any
+// error fails the test.
 func build(t *testing.T, dir string) Result {
 	t.Helper()
 	s, err := spec.Load(filepath.Join(dir, "setup.json"))
@@ -49,6 +58,10 @@ func build(t *testing.T, dir string) Result {
 	return r
 }
 
+// TestBuildMakesASetup pins the built setup.exe: its output path, a Setup payload whose manifest
+// lists the three fixture files with the right sizes and hashes, packed bytes that match, the
+// license text, no build-machine folder in the manifest, hello.exe's icon in the setup's resources,
+// and version info 1.0.0.0 with "Wizard Fixture Setup".
 func TestBuildMakesASetup(t *testing.T) {
 	dir := testexe.Fixture(t)
 	r := build(t, dir)
@@ -112,6 +125,8 @@ func TestBuildMakesASetup(t *testing.T) {
 	}
 }
 
+// TestBuildIsReproducible pins byte-identical output: two builds of one folder, and a third from a
+// copy of it elsewhere, have the same SHA-256.
 func TestBuildIsReproducible(t *testing.T) {
 	dir := testexe.Fixture(t)
 	a := build(t, dir)
@@ -127,6 +142,7 @@ func TestBuildIsReproducible(t *testing.T) {
 	}
 }
 
+// TestBuildRefusesABadSpec pins that a bad version comes back as a *SpecError naming the field.
 func TestBuildRefusesABadSpec(t *testing.T) {
 	dir := testexe.Fixture(t)
 	s, _ := spec.Load(filepath.Join(dir, "setup.json"))
@@ -139,6 +155,8 @@ func TestBuildRefusesABadSpec(t *testing.T) {
 	}
 }
 
+// run starts the test maker in dir with args and returns its combined output and exit code. With
+// its standard output a pipe, the maker prints there instead of showing a message box.
 func run(t *testing.T, dir string, args ...string) (string, int) {
 	t.Helper()
 	cmd := exec.Command(testexe.Maker(t), args...)
@@ -154,6 +172,9 @@ func run(t *testing.T, dir string, args ...string) (string, int) {
 	return string(out), 0
 }
 
+// TestCommandLine pins the command line's exit codes and messages: build with -o works, flags after
+// setup.json and a missing file are usage errors (2), a bad setup.json lists every problem with 2,
+// -version prints the name and version, and an unknown flag is 2.
 func TestCommandLine(t *testing.T) {
 	dir := testexe.Fixture(t)
 	out, code := run(t, dir, "build", "-o", "made.exe", "setup.json")
@@ -181,4 +202,4 @@ func TestCommandLine(t *testing.T) {
 	}
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=1f164e426a9aafbaa6d0c0a8b50a4c07d4f99cda5a2e4cc72493797ca7c2288e ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=95fa269a8815f46e99f0e2dd82b1dd9d28be2c7786418937ce6e8000ed06e4f8 ====

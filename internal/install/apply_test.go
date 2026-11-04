@@ -1,11 +1,16 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: wizard_maker | File: internal/install/apply_test.go
-// About: Tests for package install.
+// About: Tests for Apply: install, upgrade, rollback at every step, cancel and the refusals.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
 // the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
+
+// Tests for Apply: install, upgrade, rollback at every step, cancel and the refusals.
+//
+// They run in a -root sandbox with the fixtures in fixtures_test.go. The rollback tests compare whole
+// sandbox snapshots (every file's hash plus the registry) before and after a failed Apply.
 
 package install
 
@@ -22,6 +27,10 @@ import (
 	"testing"
 )
 
+// TestApplyInstallsEverything pins a new install's result: every packed file with its bytes, the
+// icon and uninstaller, the marker (with hashes, installer and both shortcuts), no .setup left, the
+// registry entry, and a marker the siblings' plainer marker type still reads (6 files: 4 packed plus
+// app.ico and uninstall.exe).
 func TestApplyInstallsEverything(t *testing.T) {
 	s := newSandbox(t)
 	s.install(t, "1.0.0", v1, Choices{StartMenu: true, Desktop: true})
@@ -64,6 +73,9 @@ func TestApplyInstallsEverything(t *testing.T) {
 	}
 }
 
+// TestApplyUpgrade pins an upgrade from v1 to v2: a dropped file the user changed is kept and
+// reported, a dropped unchanged one goes, the changed exe is replaced, the desktop shortcut the user
+// no longer wants goes, and installing the same version again (a repair) works.
 func TestApplyUpgrade(t *testing.T) {
 	s := newSandbox(t)
 	s.install(t, "1.0.0", v1, Choices{StartMenu: true, Desktop: true})
@@ -94,6 +106,9 @@ func TestApplyUpgrade(t *testing.T) {
 }
 
 // A failure at any step leaves exactly what was there before.
+// A clean run first records every Fault step name; then, for a new install and for an upgrade, a
+// fresh sandbox fails at each recorded step in turn and must snapshot the same as before. At least 8
+// steps guards against the hook silently not being called.
 func TestApplyRollsBackAtEveryStep(t *testing.T) {
 	for _, upgrade := range []bool{false, true} {
 		var steps []string
@@ -140,6 +155,8 @@ func TestApplyRollsBackAtEveryStep(t *testing.T) {
 	}
 }
 
+// TestApplyRegistryFailureRollsBack pins that a failing registry Write (the last phase, after every
+// file and shortcut has moved) puts the earlier install back exactly.
 func TestApplyRegistryFailureRollsBack(t *testing.T) {
 	s := newSandbox(t)
 	s.install(t, "1.0.0", v1, Choices{StartMenu: true})
@@ -155,11 +172,13 @@ func TestApplyRegistryFailureRollsBack(t *testing.T) {
 	}
 }
 
+// TestApplyCancel pins that Cancel mid-unpack returns ErrCancelled and leaves the sandbox empty,
+// including the Programs folders setup created.
 func TestApplyCancel(t *testing.T) {
 	s := newSandbox(t)
 	env := s.env(v1)
 	n := 0
-	env.Cancelled = func() bool { n++; return n > 2 }
+	env.Cancelled = func() bool { n++; return n > 2 } // true from the third poll: after two files are unpacked
 	p, _ := MakePlan(manifest("1.0.0", v1), s.pl, Choices{Dir: s.dir(), StartMenu: true}, nil, today, 14)
 	if _, err := Apply(p, env); !errors.Is(err, ErrCancelled) {
 		t.Fatalf("%v", err)
@@ -169,6 +188,8 @@ func TestApplyCancel(t *testing.T) {
 	}
 }
 
+// TestApplyRefusals pins preflight's three refusals (a file in use, a stranger's file where setup
+// writes one, a leftover .setup) and that none of them changes anything.
 func TestApplyRefusals(t *testing.T) {
 	s := newSandbox(t)
 	s.install(t, "1.0.0", v1, Choices{StartMenu: true})
@@ -182,7 +203,7 @@ func TestApplyRefusals(t *testing.T) {
 	}
 	var r *Refusal
 	before := s.snapshot(t)
-	// a file the program holds open
+	// a file the program holds open: share mode 0 denies every other open, as a running exe denies writes
 	exe := filepath.Join(s.dir(), "hello.exe")
 	p16, _ := syscall.UTF16PtrFromString(exe)
 	h, err := syscall.CreateFile(p16, syscall.GENERIC_READ, 0, nil, syscall.OPEN_EXISTING, 0, 0)
@@ -211,4 +232,4 @@ func TestApplyRefusals(t *testing.T) {
 	}
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=33564a4c5fbd3b37615dabd2069a45e76cbf651a7f021a786860cd35e7adab7c ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=e5ab21bd5197ed99010ddf78fd1eaa3a280cf547bad63496bfb1617eec614253 ====

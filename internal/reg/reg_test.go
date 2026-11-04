@@ -1,11 +1,16 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: wizard_maker | File: internal/reg/reg_test.go
-// About: Tests for package reg.
+// About: Tests for package reg: both registries on one round trip, and the sandbox format.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
 // the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
+
+// Tests for package reg: both registries on one round trip, and the sandbox format.
+//
+// TestHKCURoundTrip writes the real registry under a throwaway key below HKEY_CURRENT_USER\Software
+// and removes it afterwards; -short skips it.
 
 package reg
 
@@ -21,6 +26,8 @@ import (
 	"generic-company/wizard/internal/install"
 )
 
+// values is a typical Apps & features entry, sorted by name as Read returns it. The
+// UninstallString holds quotes, a space, "&" and "%" to show they are stored as is.
 var values = []install.Value{
 	install.Str("DisplayName", "Generic Company Hello 1.0.0"),
 	install.DWord("EstimatedSize", 42),
@@ -29,6 +36,9 @@ var values = []install.Value{
 	install.Str("UninstallString", `"C:\x\uninstall.exe" -root "C:\sand box & 100%"`),
 }
 
+// roundTrip checks the install.Registry contract on r: a fresh key is not found, Write then Read
+// gives the same values, a second Write replaces rather than merges, Delete works twice, and a
+// deleted key is not found.
 func roundTrip(t *testing.T, r install.Registry, id string) {
 	t.Helper()
 	if _, found, err := r.Read(id); err != nil || found {
@@ -58,11 +68,15 @@ func roundTrip(t *testing.T, r install.Registry, id string) {
 	}
 }
 
+// TestFileRoundTrip runs the round trip on a registry.json that does not exist yet.
 func TestFileRoundTrip(t *testing.T) {
 	roundTrip(t, File{Path: filepath.Join(t.TempDir(), "registry.json")}, "GenericCompany.Hello")
 }
 
 // The other Generic Company programs read and write the same file.
+//
+// It reads an entry written in the siblings' format, then writes one and checks the JSON names and
+// value types, and that the sibling's entry survived.
 func TestFileMatchesTheSiblings(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "registry.json")
 	sibling := `{"HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\GenericCompany.CMS": {"DisplayName": "Generic Company Journal 0.2.0", "NoModify": 1}}`
@@ -86,6 +100,9 @@ func TestFileMatchesTheSiblings(t *testing.T) {
 	}
 }
 
+// TestHKCURoundTrip runs the round trip on the real registry under a key named after the process
+// and time, so parallel runs do not meet, then checks Subkeys and String there, including that a
+// DWORD does not read as a string.
 func TestHKCURoundTrip(t *testing.T) {
 	if testing.Short() {
 		t.Skip("writes the real registry (a throwaway key)")
@@ -111,4 +128,4 @@ func TestHKCURoundTrip(t *testing.T) {
 	}
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=4bde856793e98346bd4629a16231a5a751a7813f0223c40be0ef35cb737c2e14 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=58ef0437462241144374e43acb506395cad7f30c68101c59d5a29f75d7be108d ====

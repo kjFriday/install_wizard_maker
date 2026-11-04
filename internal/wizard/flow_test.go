@@ -1,11 +1,13 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: wizard_maker | File: internal/wizard/flow_test.go
-// About: Tests for package wizard.
+// About: Tests for Flow: the pages per option set, the walk's labels and Back, and the gates.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
 // the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
+
+// Tests for Flow: the pages per option set, the walk's labels and Back, and the gates.
 
 package wizard
 
@@ -14,6 +16,7 @@ import (
 	"testing"
 )
 
+// TestSetupPages checks the optional pages, including that an upgrade skips Folder even when asked.
 func TestSetupPages(t *testing.T) {
 	for _, c := range []struct {
 		license, folder, shortcuts, upgrade bool
@@ -30,6 +33,8 @@ func TestSetupPages(t *testing.T) {
 	}
 }
 
+// TestSetupWalk walks Welcome, License, Folder, Progress, Finish: Next says Install on the page before
+// the work and Finish on the last, and Back works only on the pages between the first and the work.
 func TestSetupWalk(t *testing.T) {
 	f := SetupFlow(true, true, false, false)
 	var labels []string
@@ -52,6 +57,8 @@ func TestSetupWalk(t *testing.T) {
 	}
 }
 
+// TestGates checks the blocked welcome page, the unaccepted license, the work page (no Next, no Back),
+// and the uninstaller's labels and its banner on Done.
 func TestGates(t *testing.T) {
 	f := SetupFlow(true, false, false, false)
 	if !f.CanNext(Gate{}) || f.CanNext(Gate{Blocked: true}) {
@@ -76,4 +83,4 @@ func TestGates(t *testing.T) {
 	}
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=51b3e7b427c6f951bbc9b5bb448b70641d8253968ee5988ca9d461e567476126 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=b1dfff8b182d1acbe024581e8c2764cf9dc8f84394fb162d8a9a160382b6f155 ====

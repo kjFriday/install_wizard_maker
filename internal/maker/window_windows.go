@@ -1,15 +1,28 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: wizard_maker | File: internal/maker/window_windows.go
-// About: The maker's window: the menu and keyboard shortcuts, the layout of the setup.json fields...
+// About: The maker's window: menu, shortcuts, setup.json fields, loading, saving and commands.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
 // the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
 
-// The maker's window: the menu and keyboard shortcuts, the layout of the setup.json fields, loading and
-// saving, and the routing of every command. Building (with the -smoke walk) is in window_build_windows.go,
-// the Help menu in window_help_windows.go.
+// The maker's window: menu, shortcuts, setup.json fields, loading, saving and commands.
+//
+// The window edits one setup.json at a time. Its fields mirror Form (form.go); the spec being edited
+// is kept in makerUI.s and the fields are read back into a copy of it whenever the current state is
+// needed. Building (with the -smoke walk) is in window_build_windows.go, the Help menu in
+// window_help_windows.go. Controls come from package win, file pickers from package shell.
+//
+// Main flow:
+//  1. Main (cli.go) calls Window with the setup.json named on the command line, if any.
+//  2. Window makes the menu, the window and its controls (layout), loads the spec and runs the
+//     message loop, or the -smoke walk instead.
+//  3. Every menu item, accelerator and control notification arrives in command, which marks the
+//     spec changed, opens pickers, loads, saves or builds.
+//  4. Closing asks about unsaved changes (closing, mayDiscard) and refuses while a build runs.
+//
+// Start reading at Window.
 
 package maker
 
@@ -27,6 +40,10 @@ import (
 )
 
 // The maker window's layout (96-dpi units) and command ids.
+//
+// mkW and mkH are the client size; labelX is the left column of captions, fieldX and fieldW the
+// column of fields, and sideX and sideW the column of Browse and Add buttons on the right.
+// package win scales these to the monitor's DPI.
 const (
 	mkW, mkH = 640, 566
 	labelX   = 16
@@ -36,6 +53,10 @@ const (
 	sideW    = 88
 )
 
+// The control and menu command ids, one per field, button and menu item. They start at 100 to stay
+// clear of the dialog ids Windows reserves (IDOK = 1, IDCANCEL = 2 and so on). WM_COMMAND carries
+// the id to command, and the accelerators and menu reuse the same ids, so Build from the menu, F5
+// and the Build button all arrive as idBuild.
 const (
 	idName = 100 + iota
 	idVersion
@@ -72,8 +93,15 @@ const (
 	idUninstallSelf
 )
 
+// jsonFilter is the file-type list of the Open and Save setup.json dialogs.
 var jsonFilter = []shell.Filter{{Name: "setup.json", Pattern: "*.json"}, {Name: "All files", Pattern: "*.*"}}
 
+// makerUI is the state of the maker's window: the spec being edited, its controls, and the build
+// running behind it.
+//
+// Fields above mu belong to the UI thread; pending, done, result and err are shared with the build
+// worker and only touched under mu. dirty is true once a field changed after the last load or save.
+// Files are not a text field: s.Files is edited directly by Add file, Add folder and Remove.
 type makerUI struct {
 	w     *win.Window
 	self  string
@@ -103,6 +131,19 @@ type makerUI struct {
 }
 
 // Window opens the maker's window, with file (a setup.json) if given; smoke, if set, walks it instead.
+//
+// self is the maker's own exe (the stub of every build). The result is an app exit code: ExitOK
+// after a normal close, ExitFailed when the window cannot be made or a panic ended the message loop,
+// or the smoke walk's code. A setup.json that cannot be loaded is reported in a message box and the
+// window opens untitled instead. It must run on the thread main locked, since Win32 windows belong
+// to the thread that made them.
+//
+// Steps:
+//  1. Build the File, Build and Help menus (a tab in an item's text puts its shortcut on the right).
+//  2. Make the window, lay out the controls and register Ctrl+N, Ctrl+O, Ctrl+S and F5.
+//  3. Hook commands, closing and worker wake-ups to the makerUI.
+//  4. Load the spec (made absolute so the title and relative paths work) and fill the fields.
+//  5. Run the smoke walk, or show the window with the name field focused and run the message loop.
 func Window(self, file, smoke string) int {
 	menu := win.NewMenu([]win.Menu{
 		{Title: "&File", Items: []win.MenuItem{{ID: idNew, Text: "&New\tCtrl+N"}, {ID: idOpen, Text: "&Open…\tCtrl+O"},
@@ -144,8 +185,15 @@ func Window(self, file, smoke string) int {
 	return app.ExitOK
 }
 
+// layout creates every control of the window at its fixed position (96-dpi units).
+//
+// The rows run top to bottom: name and version, app id and group, publisher, icon, license, the
+// file list with its buttons, exclude, program and arguments, the four ticks, output, the Build
+// button with its hint, and the log. "&" in a caption marks its access key (Alt+letter moves to the
+// field after it). Build is the default button, so Enter in a field builds.
 func (ui *makerUI) layout() {
 	w := ui.w
+	// row puts a caption in the left column; y+4 lines its text up with the 24-unit-high edit beside it
 	row := func(y int, label string) {
 		w.Caption(label, win.Rect{X: labelX, Y: y + 4, W: fieldX - labelX - 6, H: 20}, win.Face)
 	}
@@ -192,6 +240,10 @@ func (ui *makerUI) layout() {
 }
 
 // load shows a spec (from file, or untitled when file is "").
+//
+// It sets quiet while filling the fields, so the change notifications that SetText sends do not
+// mark the spec changed, and clears dirty. It then refills the file list and the program choices
+// and updates the title.
 func (ui *makerUI) load(s *spec.Spec, file string) {
 	ui.quiet = true
 	defer func() { ui.quiet = false }()
@@ -210,7 +262,7 @@ func (ui *makerUI) load(s *spec.Spec, file string) {
 	ui.title()
 }
 
-// form reads the fields.
+// form reads the fields; Files comes from the spec, since the list box only shows it.
 func (ui *makerUI) form() Form {
 	return Form{Name: ui.name.TextValue(), Version: ui.version.TextValue(), ID: ui.id.TextValue(), Group: ui.group.TextValue(),
 		Publisher: ui.publisher.TextValue(), Icon: ui.icon.TextValue(), License: ui.license.TextValue(), Files: ui.s.Files,
@@ -219,13 +271,20 @@ func (ui *makerUI) form() Form {
 		Desktop: ui.desktop.Checked(), Output: ui.output.TextValue()}
 }
 
-// current is the spec as the fields now say.
+// current is the spec as the fields now say: a copy of ui.s with the form applied, so ui.s itself
+// is left as loaded. The copy is shallow; Apply replaces its slices rather than changing them.
 func (ui *makerUI) current() *spec.Spec {
 	s := *ui.s
 	ui.form().Apply(&s)
 	return &s
 }
 
+// listFiles refreshes the file list from ui.s.Files and offers every .exe those rules pick up as a
+// choice in the Program box.
+//
+// The program choices come from spec.Sources on the current fields, so they are the paths as they
+// will sit in the install folder. When the sources cannot be listed (a missing folder, say) the
+// choices are left empty. The text typed in the Program box is kept, since SetItems clears it.
 func (ui *makerUI) listFiles() {
 	var lines []string
 	for _, r := range ui.s.Files {
@@ -245,6 +304,8 @@ func (ui *makerUI) listFiles() {
 	ui.program.SetText(text)
 }
 
+// title sets the window title: the app title, then the spec's folder and file name (or Untitled),
+// with " *" while there are unsaved changes.
 func (ui *makerUI) title() {
 	name := "Untitled"
 	if ui.file != "" {
@@ -256,6 +317,8 @@ func (ui *makerUI) title() {
 	ui.w.SetTitle(app.Title + " — " + name)
 }
 
+// changed marks the spec as edited and shows the " *" in the title, unless load is filling the
+// fields or it is already marked.
 func (ui *makerUI) changed() {
 	if !ui.quiet && !ui.dirty {
 		ui.dirty = true
@@ -264,6 +327,9 @@ func (ui *makerUI) changed() {
 }
 
 // rel is how a picked path is written: relative to setup.json's folder when inside it.
+//
+// Relative paths use "/" so setup.json reads the same on any machine. An untitled spec has no
+// folder yet, so its paths stay absolute until save relativizes them.
 func (ui *makerUI) rel(p string) string {
 	if ui.file == "" {
 		return p
@@ -275,6 +341,7 @@ func (ui *makerUI) rel(p string) string {
 	return filepath.ToSlash(r)
 }
 
+// dir is where the file pickers start: setup.json's folder, or the working folder while untitled.
 func (ui *makerUI) dir() string {
 	if ui.file != "" {
 		return filepath.Dir(ui.file)
@@ -283,6 +350,12 @@ func (ui *makerUI) dir() string {
 	return wd
 }
 
+// command handles one WM_COMMAND: id is the control, menu item or accelerator, and code the
+// control's notification code (EN_CHANGE for an edit, CBN_* for the combo box).
+//
+// Edits and ticks only mark the spec changed. Browse buttons open a picker and write the chosen
+// path, relative where possible; Add and Remove change ui.s.Files directly. The File and Build
+// menus load, save, build and run; any other id goes to helpCommand. Errors show in message boxes.
 func (ui *makerUI) command(id, code int) {
 	switch id {
 	case idName, idVersion, idID, idGroup, idPublisher, idIcon, idLicense, idExclude, idArgs, idOutput:
@@ -317,6 +390,8 @@ func (ui *makerUI) command(id, code int) {
 		}
 	case idRemove:
 		if i := ui.files.Selected(); i >= 0 && i < len(ui.s.Files) {
+			// the full slice expression [:i:i] caps the head at i, so append copies into a new array
+			// instead of shifting the old Files array in place
 			ui.s.Files = append(ui.s.Files[:i:i], ui.s.Files[i+1:]...)
 			ui.listFiles()
 			ui.changed()
@@ -360,6 +435,7 @@ func (ui *makerUI) command(id, code int) {
 	}
 }
 
+// addRule appends a file rule, refreshes the list and marks the spec changed.
 func (ui *makerUI) addRule(r spec.FileRule) {
 	ui.s.Files = append(ui.s.Files, r)
 	ui.listFiles()
@@ -367,6 +443,8 @@ func (ui *makerUI) addRule(r spec.FileRule) {
 }
 
 // mayDiscard asks before unsaved changes are lost: false keeps them (and the window as it is).
+//
+// Yes saves (and is false when the save is cancelled or fails), No discards, Cancel keeps.
 func (ui *makerUI) mayDiscard() bool {
 	if !ui.dirty {
 		return true
@@ -384,6 +462,9 @@ func (ui *makerUI) mayDiscard() bool {
 	return false
 }
 
+// closing reports whether the window may close: never while a build runs (the worker still writes
+// to the window), otherwise after mayDiscard. It is the window's OnClose and is also called by
+// File > Exit and Help > Uninstall.
 func (ui *makerUI) closing() bool {
 	if ui.building {
 		ui.w.MessageBox(app.Name, "Wait for the build to finish.", win.MBIconInfo)
@@ -393,6 +474,16 @@ func (ui *makerUI) closing() bool {
 }
 
 // save writes setup.json; as, or an untitled spec, asks where. Paths inside its folder become relative.
+//
+// The result is true once the file is written; false when the dialog is cancelled or the write
+// fails (shown in a message box).
+//
+// Steps:
+//  1. Pick the target: the current file, or ask with a Save dialog.
+//  2. Take the spec as the fields say.
+//  3. When the folder changes (or the spec was untitled), make every path absolute from the old
+//     folder, then relative to the new one, so the paths still point at the same files.
+//  4. Write the file and load the saved spec, which clears dirty and updates the title.
 func (ui *makerUI) save(as bool) bool {
 	target := ui.file
 	if as || target == "" {
@@ -415,4 +506,4 @@ func (ui *makerUI) save(as bool) bool {
 	return true
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=26819da94302bd546b6485637c0587295f08b31633879c414e2e8d935ba1b51a ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=537850f12c43c9adcd152d4860f433790af823f90749dce7bfd5267cdfcb6358 ====

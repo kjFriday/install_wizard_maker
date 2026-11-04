@@ -1,11 +1,13 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: wizard_maker | File: internal/install/uninstall_test.go
-// About: Tests for package install.
+// About: Tests for Uninstall, removeWait and DeleteAfterExit: only unchanged own files go.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
 // the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
+
+// Tests for Uninstall, removeWait and DeleteAfterExit: only unchanged own files go.
 
 package install
 
@@ -19,6 +21,10 @@ import (
 	"time"
 )
 
+// TestUninstall pins an uninstall run from inside the install folder: a changed file is kept and
+// reported, the user's own file stays, the running uninstall.exe is left for AfterExit with the
+// folder and its group, shortcuts and the empty Start-menu group go, and so does the registry entry.
+// A second round with Purge removes the program's settings folder but not the shared database.
 func TestUninstall(t *testing.T) {
 	s := newSandbox(t)
 	s.install(t, "1.0.0", v1, Choices{StartMenu: true, Desktop: true})
@@ -76,6 +82,9 @@ func TestUninstall(t *testing.T) {
 	}
 }
 
+// TestUninstallTouchesOnlyItsOwn pins that a hostile or broken marker cannot reach outside: a ".."
+// path (even with a matching hash), an absolute path, a .lnk outside the Start menu and desktop, and
+// a non-.lnk shortcut are all left alone.
 func TestUninstallTouchesOnlyItsOwn(t *testing.T) {
 	s := newSandbox(t)
 	outside := filepath.Join(s.pl.Root, "outside.txt")
@@ -98,6 +107,8 @@ func TestUninstallTouchesOnlyItsOwn(t *testing.T) {
 }
 
 // A file in use is retried until it is free, and only then reported.
+// With a 300 ms wait a held file is an error; with 10 s it is removed once a goroutine closes it at
+// 500 ms; a file already gone is fine.
 func TestRemoveWait(t *testing.T) {
 	defer func(d time.Duration) { lockWait = d }(lockWait)
 	file := filepath.Join(t.TempDir(), "wizard-maker.exe")
@@ -127,6 +138,9 @@ func TestRemoveWait(t *testing.T) {
 	}
 }
 
+// TestDeleteAfterExit pins that the hidden cmd removes the file and both folders even when their
+// names hold cmd's special characters (&, %PATH%, parentheses). It polls for up to 15 s, beyond the
+// script's last try at about 9 s.
 func TestDeleteAfterExit(t *testing.T) {
 	if testing.Short() {
 		t.Skip("runs cmd.exe")
@@ -149,4 +163,4 @@ func TestDeleteAfterExit(t *testing.T) {
 	t.Fatal("not removed")
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=496b7521018051b56c7a4921e93a3858b2e5805aa5165586fdbdf2acddfd8a67 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=db05c001037babca6ee8c6a6af436817d9035c09f331a5ad7d4bcc774bd0e664 ====

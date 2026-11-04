@@ -1,13 +1,13 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: wizard_maker | File: internal/wizard/setup_test.go
-// About: Tests for the setup helpers that need no window: LaunchTarget, quoteForShell, human and...
+// About: Tests for the window-free setup helpers: LaunchTarget, quoteForShell, human, lockName.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
 // the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
 
-// Tests for the setup helpers that need no window: LaunchTarget, quoteForShell, human and lockName.
+// Tests for the window-free setup helpers: LaunchTarget, quoteForShell, human, lockName.
 
 package wizard
 
@@ -18,6 +18,8 @@ import (
 	"generic-company/wizard/internal/spec"
 )
 
+// TestLaunchTarget checks the order Launch prefers (Start-menu shortcut, desktop shortcut, the program)
+// and that a program's arguments are expanded and quoted, with pythonw.exe for a Python program.
 func TestLaunchTarget(t *testing.T) {
 	pl := install.SandboxPlaces(`C:\sandbox`)
 	dir := `C:\sandbox\Programs\Generic Company Inc\Hello`
@@ -45,6 +47,8 @@ func TestLaunchTarget(t *testing.T) {
 	}
 }
 
+// TestQuoteForShell pins the quoting as it is, the trailing-backslash case included (see the known
+// limitation on quoteForShell).
 func TestQuoteForShell(t *testing.T) {
 	for in, want := range map[string]string{
 		"":                 `""`,
@@ -62,6 +66,8 @@ func TestQuoteForShell(t *testing.T) {
 	}
 }
 
+// TestHuman checks each unit's edges: KB rounds up, and the switch to MB and GB is at exactly 1 MiB
+// and 1 GiB.
 func TestHuman(t *testing.T) {
 	for n, want := range map[int64]string{
 		0:         "0 KB",
@@ -88,4 +94,4 @@ func TestLockName(t *testing.T) {
 	}
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=ec8dd9893e59b9e5daeda385bcb8b2df17cc357ca32049966a0e6b8e3b9895fd ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=81ac403a00e8d63bb980d83be55a67284d36b4dc4928ef51ad95ff180538661c ====

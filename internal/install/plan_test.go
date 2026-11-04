@@ -1,11 +1,13 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: wizard_maker | File: internal/install/plan_test.go
-// About: Tests for package install.
+// About: Tests for MakePlan, CheckFolder, Existing and quoteArg, before anything is applied.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
 // the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
+
+// Tests for MakePlan, CheckFolder, Existing and quoteArg, before anything is applied.
 
 package install
 
@@ -21,6 +23,9 @@ import (
 	"generic-company/wizard/internal/spec"
 )
 
+// TestPlanNewInstall pins a new install's plan: both shortcut paths, the shortcut's target, folder,
+// icon and expanded, quoted argument, the Apps & features strings (with -root in a sandbox), and the
+// marker. EstimatedSize 5 is (26 bytes of v1 + a 4096-byte uninstaller) / 1024, plus 1.
 func TestPlanNewInstall(t *testing.T) {
 	s := newSandbox(t)
 	p, err := MakePlan(manifest("1.0.0", v1), s.pl, Choices{Dir: s.dir(), StartMenu: true, Desktop: true}, nil, today, 4096)
@@ -58,6 +63,9 @@ func TestPlanNewInstall(t *testing.T) {
 	}
 }
 
+// TestPlanRefuses pins the three refusals (a downgrade, where "1.10" must compare above "1.0.0"; a
+// folder of another program; Python needed and not found) and that a found Python becomes the
+// shortcut's target with the expanded script as its argument.
 func TestPlanRefuses(t *testing.T) {
 	s := newSandbox(t)
 	c := Choices{Dir: s.dir(), StartMenu: true}
@@ -82,6 +90,8 @@ func TestPlanRefuses(t *testing.T) {
 }
 
 // The other Generic Company programs' markers have no hashes: shipped entries are replaced, the rest kept.
+// The three shapes are those the sibling installers write: Go's bare names, Python's slash paths and
+// Rust's folder names.
 func TestPlanOverSiblingMarkers(t *testing.T) {
 	s := newSandbox(t)
 	for name, files := range map[string][]string{
@@ -107,6 +117,9 @@ func TestPlanOverSiblingMarkers(t *testing.T) {
 	}
 }
 
+// TestCheckFolder pins which folders setup accepts: new, empty or this program's own; and which it
+// refuses: one with other files, another program's, a known folder itself, a drive root, a relative
+// path, and a path over 150 characters.
 func TestCheckFolder(t *testing.T) {
 	s := newSandbox(t)
 	empty := filepath.Join(s.pl.Programs, "Empty")
@@ -131,6 +144,8 @@ func TestCheckFolder(t *testing.T) {
 	}
 }
 
+// TestExisting pins that an install is found through the registry's InstallLocation (here a custom
+// folder), and only when that folder's marker names the same program.
 func TestExisting(t *testing.T) {
 	s := newSandbox(t)
 	if dir, m := Existing(s.reg, s.pl, "GenericCompany.Hello", "Generic Company Inc", "Generic Company Hello"); dir != "" || m != nil {
@@ -148,6 +163,8 @@ func TestExisting(t *testing.T) {
 	}
 }
 
+// TestQuoteArg pins that a path is always quoted and a trailing backslash doubled, so it cannot
+// escape the closing quote (a folder path and a drive root both end in one).
 func TestQuoteArg(t *testing.T) {
 	for in, want := range map[string]string{`C:\a b\x.exe`: `"C:\a b\x.exe"`, `C:\dir\`: `"C:\dir\\"`, `C:\`: `"C:\\"`} {
 		if got := quoteArg(in); got != want {
@@ -156,4 +173,4 @@ func TestQuoteArg(t *testing.T) {
 	}
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=1f0dac9044d9f2f4e769645d9182122e9e01227adc801a15fd3eda960309374f ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=42b020389a558310ae33ba0c410d5eeb842a954ace1adade295b51b9142c355c ====

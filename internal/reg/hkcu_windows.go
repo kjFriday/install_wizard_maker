@@ -1,11 +1,22 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: wizard_maker | File: internal/reg/hkcu_windows.go
-// About: Part of package reg in wizard_maker.
+// About: The real registry via advapi32: the Uninstall key and reads for package python.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
 // the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
+
+// The real registry via advapi32: the Uninstall key and reads for package python.
+//
+// Go's standard library has no registry package and the module uses the standard library only (no
+// golang.org/x/sys/windows/registry), so this file calls the Win32 Reg* functions directly
+// through syscall. Those functions return their error code (0 is ERROR_SUCCESS) instead of setting
+// GetLastError, which status turns into an error. Strings cross the boundary as UTF-16.
+//
+// Every key is opened with KEY_WOW64_64KEY, so a 32-bit build would still see the 64-bit view.
+// HKEY_CURRENT_USER\Software is shared by both views anyway; the flag matters for the
+// HKEY_LOCAL_MACHINE reads package python makes.
 
 package reg
 
@@ -18,7 +29,8 @@ import (
 	"generic-company/wizard/internal/install"
 )
 
-// Root keys.
+// Root keys: the predefined handles HKEY_CURRENT_USER and HKEY_LOCAL_MACHINE (winreg.h), passed
+// where a function expects an open key handle.
 const (
 	CurrentUser  = 0x80000001
 	LocalMachine = 0x80000002
@@ -35,6 +47,8 @@ const (
 	keyNameMax   = 256                // a key name is at most 255 characters, plus its NUL
 )
 
+// advapi32.dll and the registry functions used here, the wide-string (W) variants. The DLL loads
+// and each function is looked up on first call.
 var (
 	advapi32         = syscall.NewLazyDLL("advapi32.dll")
 	procOpenKey      = advapi32.NewProc("RegOpenKeyExW")
@@ -57,6 +71,8 @@ func status(r uintptr) error {
 	return syscall.Errno(r)
 }
 
+// open opens root\path with the given access (plus the 64-bit view) via RegOpenKeyExW and returns
+// its handle; the caller closes it with closeKey. A missing key gives errNotFound.
 func open(root uintptr, path string, access uint32) (uintptr, error) {
 	p, err := syscall.UTF16PtrFromString(path)
 	if err != nil {
@@ -67,12 +83,17 @@ func open(root uintptr, path string, access uint32) (uintptr, error) {
 	return h, status(r)
 }
 
+// closeKey closes a key handle from open or RegCreateKeyExW; its result is ignored.
 func closeKey(h uintptr) { procCloseKey.Call(h) }
 
 // HKCU is the real Uninstall key of the current user. Base, when set, replaces
 // Software\Microsoft\Windows\CurrentVersion\Uninstall (tests use a throwaway key).
+//
+// Writing under HKEY_CURRENT_USER needs no administrator rights, which is what lets setup install
+// per user without elevation.
 type HKCU struct{ Base string }
 
+// path is id's key under HKEY_CURRENT_USER: Base\id, or the standard Uninstall key.
 func (k HKCU) path(id string) string {
 	if k.Base != "" {
 		return k.Base + `\` + id
@@ -81,6 +102,16 @@ func (k HKCU) path(id string) string {
 }
 
 // Read returns the key's values, sorted by name.
+//
+// found is false, without error, when the key is missing. REG_SZ and REG_EXPAND_SZ come back as
+// Text (not expanded), REG_DWORD as Number, anything else as Raw bytes.
+//
+// Steps:
+//  1. Open the key for reading.
+//  2. Ask RegQueryInfoKeyW for the value count and the longest value name and data, so one buffer
+//     size fits every value.
+//  3. Enumerate the values by index with RegEnumValueW, decoding each by its type.
+//  4. Sort by name, so the order does not depend on the registry's.
 func (k HKCU) Read(id string) ([]install.Value, bool, error) {
 	h, err := open(CurrentUser, k.path(id), keyRead)
 	if errors.Is(err, errNotFound) {
@@ -103,6 +134,8 @@ func (k HKCU) Read(id string) ([]install.Value, bool, error) {
 	for i := uint32(0); i < count; i++ {
 		name := make([]uint16, nameMax+1) // the longest name, plus its NUL
 		data := make([]byte, dataMax+2)   // the longest data, plus room for a UTF-16 NUL
+		// in: the buffer sizes (name in characters, data in bytes); out: the lengths written, the name
+		// without its NUL
 		nameLen, dataLen := uint32(len(name)), uint32(len(data))
 		var typ uint32
 		var dp uintptr
@@ -123,6 +156,7 @@ func (k HKCU) Read(id string) ([]install.Value, bool, error) {
 			v.Text = utf16Text(data)
 		case install.RegDWORD:
 			if len(data) >= 4 {
+				// REG_DWORD is a little-endian 32-bit number
 				v.Number = uint32(data[0]) | uint32(data[1])<<8 | uint32(data[2])<<16 | uint32(data[3])<<24
 			}
 		default:
@@ -135,6 +169,15 @@ func (k HKCU) Read(id string) ([]install.Value, bool, error) {
 }
 
 // Write replaces the key with exactly these values.
+//
+// It is not atomic: the old key is deleted first, so a failure part-way leaves the key missing or
+// with only some values.
+//
+// Steps:
+//  1. Delete the key and any subkeys (no error if it is missing).
+//  2. Create it again with RegCreateKeyExW (non-volatile, write access, 64-bit view).
+//  3. Set each value with RegSetValueExW: strings as UTF-16 with their NUL, DWORDs as 4
+//     little-endian bytes, anything else as its Raw bytes.
 func (k HKCU) Write(id string, vals []install.Value) error {
 	if err := k.Delete(id); err != nil {
 		return err
@@ -162,6 +205,7 @@ func (k HKCU) Write(id string, vals []install.Value) error {
 			if err != nil {
 				return err
 			}
+			// view the UTF-16 units (NUL included, as REG_SZ expects) as bytes without copying
 			data = unsafe.Slice((*byte)(unsafe.Pointer(&u[0])), 2*len(u))
 		case install.RegDWORD:
 			n := v.Number
@@ -184,6 +228,8 @@ func (k HKCU) Write(id string, vals []install.Value) error {
 // Delete removes the key; no error when it is not there.
 func (k HKCU) Delete(id string) error { return k.deleteTree(k.path(id)) }
 
+// deleteTree removes HKEY_CURRENT_USER\path with all its values and subkeys (RegDeleteTreeW); a
+// missing key is not an error. It ignores Base: path is the full key path.
 func (HKCU) deleteTree(path string) error {
 	p, err := syscall.UTF16PtrFromString(path)
 	if err != nil {
@@ -197,6 +243,9 @@ func (HKCU) deleteTree(path string) error {
 }
 
 // DeleteKey removes an empty key (tests tidy up their throwaway base with it).
+//
+// RegDeleteKeyW fails on a key that still has subkeys, so a shared parent is only removed once the
+// last test key under it is gone.
 func DeleteKey(root uintptr, path string) error {
 	p, err := syscall.UTF16PtrFromString(path)
 	if err != nil {
@@ -207,6 +256,9 @@ func DeleteKey(root uintptr, path string) error {
 }
 
 // Subkeys lists the names of a key's subkeys (none when the key is missing).
+//
+// It enumerates by index with RegEnumKeyExW until ERROR_NO_MORE_ITEMS. On another error it returns
+// the names read so far with the error.
 func Subkeys(root uintptr, path string) ([]string, error) {
 	h, err := open(root, path, keyRead)
 	if errors.Is(err, errNotFound) {
@@ -231,6 +283,16 @@ func Subkeys(root uintptr, path string) ([]string, error) {
 }
 
 // String reads a string value ("" for the key's default value); ok is false when it is missing.
+//
+// ok is also false for a value of another type, an empty value, or any error. REG_EXPAND_SZ is
+// returned as stored, with its %VARIABLES% not expanded.
+//
+// Steps:
+//  1. Open the key for reading.
+//  2. Call RegQueryValueExW with no buffer to learn the type and size in bytes.
+//  3. Call it again to fill a buffer of that size (allocated two bytes larger, though only size is
+//     passed and used).
+//  4. Decode the UTF-16, stopping at the first NUL; a stored string need not end in one.
 func String(root uintptr, path, name string) (string, bool) {
 	h, err := open(root, path, keyRead)
 	if err != nil {
@@ -252,6 +314,8 @@ func String(root uintptr, path, name string) (string, bool) {
 	return utf16Text(data[:size]), true
 }
 
+// utf16Text decodes registry string data: little-endian UTF-16 bytes, up to the first NUL. An odd
+// last byte is dropped.
 func utf16Text(b []byte) string {
 	u := make([]uint16, len(b)/2)
 	for i := range u {
@@ -260,4 +324,4 @@ func utf16Text(b []byte) string {
 	return syscall.UTF16ToString(u)
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=5b2c601e6c599869682e8e7e391f60e7fd3bf4a10df4cab15d63a233c29f8674 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=7ea067f5c0b942f40af25f8c31fc41e9fa9f75e09353270319c288521e21ece5 ====

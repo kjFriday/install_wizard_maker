@@ -1,13 +1,22 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: wizard_maker | File: internal/spec/check.go
-// About: Checks of a spec: its identity, run, exclude and purge entries, and Windows names and...
+// About: Checks of a spec: identity, run, exclude and purge entries, Windows names and paths.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
 // the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
 
-// Checks of a spec: its identity, run, exclude and purge entries, and Windows names and paths.
+// Checks of a spec: identity, run, exclude and purge entries, Windows names and paths.
+//
+// Spec.Check is what the maker's form and build command run before a build; Manifest.Check
+// (manifest.go) reuses checkIdentity, checkRun, checkPurge and CheckInstalledPath on a manifest read
+// from a setup.exe, and Sources uses CheckInstalledPath on every installed path. Checks collect
+// every problem instead of stopping at the first, so the form can show them all at once.
+//
+// The Windows name rules come from the file-naming conventions in the Win32 documentation: no
+// <>:"/\|?* or control characters, no trailing dot or space, and none of the device names (CON,
+// PRN, AUX, NUL, COM1-9, LPT1-9 and their superscript-digit forms), with or without an extension.
 
 package spec
 
@@ -24,6 +33,9 @@ import (
 
 // The shapes of ids, AppUserModelIDs, versions (at most four parts: VS_FIXEDFILEINFO keeps four 16-bit
 // numbers) and requires.python.
+//
+// An AppUserModelID may be up to 128 characters, the limit Windows documents for it; versions allow
+// five digits per part so checkIdentity can then report a part above 65535 by name.
 var (
 	idPattern      = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$`)
 	aumidPattern   = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$`)
@@ -32,6 +44,18 @@ var (
 )
 
 // Check reports every problem it finds, one per line, or nil. It also packs nothing: it only looks.
+//
+// It reads the disk (icon, license and the file rules' sources) but writes nothing. Each problem is
+// one error prefixed with the setup.json field it concerns ("id:", "run.program:"); errors.Join
+// puts one per line.
+//
+// Steps:
+//  1. Identity: id, name, version, publisher, group.
+//  2. The icon and license files.
+//  3. run and requires.
+//  4. Exclude patterns (path.Match on "" only reports a malformed pattern) and purge entries.
+//  5. The output name.
+//  6. The file rules, through Sources, and that run.program is one of the packed files.
 func (s *Spec) Check() error {
 	var errs []error
 	add := func(format string, a ...any) { errs = append(errs, fmt.Errorf(format, a...)) }
@@ -72,6 +96,8 @@ func (s *Spec) Check() error {
 	return errors.Join(errs...)
 }
 
+// packed reports whether p (as written in setup.json, either slash) is one of the packed files'
+// installed paths, ignoring case as Windows does.
 func packed(src []Source, p string) bool {
 	p = strings.Trim(filepath.ToSlash(p), "/")
 	for _, s := range src {
@@ -82,11 +108,17 @@ func packed(src []Source, p string) bool {
 	return false
 }
 
+// isFile reports whether p exists and is a regular file (not a folder or device).
 func isFile(p string) bool {
 	info, err := os.Stat(p)
 	return err == nil && info.Mode().IsRegular()
 }
 
+// checkIdentity checks the fields that name the program, for a spec and a manifest alike.
+//
+// name and group become folder and shortcut names, so they must be valid Windows names of at most
+// 64 characters. Each version part must also fit in 16 bits (65535), the size of a part in the
+// exe's VS_FIXEDFILEINFO. The publisher is free text of 1-128 printable characters.
 func checkIdentity(id, name, version, publisher, group string) []error {
 	var errs []error
 	if !idPattern.MatchString(id) {
@@ -115,6 +147,11 @@ func checkIdentity(id, name, version, publisher, group string) []error {
 	return errs
 }
 
+// checkRun checks what the shortcuts start, for a spec and a manifest alike.
+//
+// The program must be {python} (which needs requires.python) or a valid installed path; whether it
+// is packed is checked by the callers, which know the files. Args are expanded with empty values
+// only to catch unknown placeholders and stray braces.
 func checkRun(r Run, req Requires) []error {
 	var errs []error
 	switch {
@@ -143,9 +180,12 @@ func checkRun(r Run, req Requires) []error {
 	return errs
 }
 
-// checkPurge: {localappdata}\… or {appdata}\…, at least two folders deep, nothing else expanded.
+// checkPurge checks a purge entry's shape (PurgePath also checks where it lands once expanded).
+//
+// The shape: {localappdata}\… or {appdata}\…, at least two folders deep, nothing else expanded.
 func checkPurge(p string) error {
 	parts := strings.FieldsFunc(p, func(r rune) bool { return r == '\\' || r == '/' })
+	// three parts: the root placeholder plus two folders; "." and ".." fail checkComponent below
 	if len(parts) < 3 || (parts[0] != "{localappdata}" && parts[0] != "{appdata}") {
 		return fmt.Errorf("purge: %q should be {localappdata}\\… or {appdata}\\…, at least two folders deep", p)
 	}
@@ -159,6 +199,10 @@ func checkPurge(p string) error {
 
 // CheckInstalledPath checks a slash-separated path inside the install folder: every part a valid name,
 // not one of the names setup itself writes there, at most 160 characters.
+//
+// It guards every path a manifest names, since a tampered setup.exe could otherwise write outside
+// the install folder. Backslashes, a leading "/", and anything filepath.IsLocal rejects (a drive
+// such as "C:", a ".." that climbs out) all fail.
 func CheckInstalledPath(p string) error {
 	if p == "" {
 		return errors.New("empty path")
@@ -173,6 +217,8 @@ func CheckInstalledPath(p string) error {
 			return err
 		}
 	}
+	// setup's own files are reserved only at the top ("www/app.ico" is fine); the .setup work folder,
+	// which Apply stages through and deletes as its commit, is reserved with everything under it
 	switch strings.ToLower(parts[0]) {
 	case "install.json", "uninstall.exe", "app.ico", ".setup":
 		if len(parts) == 1 || strings.EqualFold(parts[0], ".setup") {
@@ -182,7 +228,9 @@ func CheckInstalledPath(p string) error {
 	return nil
 }
 
-// checkComponent: a valid Windows file or folder name of at most max characters.
+// checkComponent checks that c is a valid Windows file or folder name of at most max characters.
+//
+// max counts runes, not bytes. The error names the first rule c breaks.
 func checkComponent(c string, max int) error {
 	switch {
 	case c == "" || c == "." || c == "..":
@@ -199,6 +247,12 @@ func checkComponent(c string, max int) error {
 	return nil
 }
 
+// reserved reports whether c is a Windows device name, which Windows treats as the device whatever
+// the folder or extension ("con.txt" and "LPT1.log" are reserved too).
+//
+// The part before the first dot, upper-cased with trailing spaces trimmed, is compared, because
+// Windows ignores both when it matches device names. COM and LPT also take the superscript digits
+// 1-3, which Windows maps to the same ports.
 func reserved(c string) bool {
 	base := strings.ToUpper(strings.TrimRight(strings.SplitN(c, ".", 2)[0], " "))
 	switch base {
@@ -208,10 +262,12 @@ func reserved(c string) bool {
 	if len(base) == 4 && (strings.HasPrefix(base, "COM") || strings.HasPrefix(base, "LPT")) && base[3] >= '0' && base[3] <= '9' {
 		return true
 	}
+	// the superscripts are two bytes each in UTF-8, so the length check works on runes
 	r := []rune(base)
 	return len(r) == 4 && (string(r[:3]) == "COM" || string(r[:3]) == "LPT") && strings.ContainsRune("¹²³", r[3])
 }
 
+// hasControl reports whether s has an ASCII control character (below 0x20, or DEL).
 func hasControl(s string) bool {
 	for _, r := range s {
 		if r < 0x20 || r == 0x7f {
@@ -221,4 +277,4 @@ func hasControl(s string) bool {
 	return false
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=9a881d1298deeec0c75d9610411df835bfb33c419c8c109074cb05d0d3660058 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=ae1d950be667ce13b83aac7b544f186486b09411d3ce250541931d7820ad34e2 ====

@@ -1,14 +1,17 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: wizard_maker | File: internal/install/fixtures_test.go
-// About: Fixtures the install tests share: a payload and a registry in memory, a -root sandbox...
+// About: Shared install test fixtures: in-memory payload and registry, a sandbox, two versions.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
 // the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
 
-// Fixtures the install tests share: a payload and a registry in memory, a -root sandbox, and two
-// versions of one program to install, upgrade and remove.
+// Shared install test fixtures: in-memory payload and registry, a sandbox, two versions.
+//
+// In full: a payload and a registry in memory, a -root sandbox, and two versions of one program to
+// install, upgrade and remove. Every test gets its own sandbox under t.TempDir, so tests never touch
+// the real Start menu or registry. Start reading at sandbox and its install method.
 
 package install
 
@@ -33,14 +36,18 @@ import (
 // today is the date every test install is made on.
 var today = time.Date(2026, 10, 17, 0, 0, 0, 0, time.UTC)
 
+// hash is the lowercase hex SHA-256 of b, as the marker and manifest store it.
 func hash(b []byte) string {
 	s := sha256.Sum256(b)
 	return hex.EncodeToString(s[:])
 }
 
 // memSource is a payload in memory, checked the way payload.File checks.
+// Keys are the installed "/" paths, without the payload's "files/" prefix.
 type memSource map[string][]byte
 
+// CopyChecked writes the named file to w, failing as "missing" or "damaged" when it is absent or its
+// size or hash differ, like payload.File.CopyChecked.
 func (m memSource) CopyChecked(name string, w io.Writer, size int64, want string) error {
 	b, ok := m[strings.TrimPrefix(name, "files/")]
 	if !ok {
@@ -54,6 +61,9 @@ func (m memSource) CopyChecked(name string, w io.Writer, size int64, want string
 }
 
 // manifest is the test program at version, packing files.
+// Its run.args use {localappdata}, so tests see placeholder expansion and quoting; its purge entry is
+// the program's own settings folder beside a shared database the purge must leave alone.
+// Files are sorted by path, as spec.Sources sorts them.
 func manifest(version string, files memSource) *spec.Manifest {
 	m := &spec.Manifest{Format: 1, ID: "GenericCompany.Hello", Name: "Generic Company Hello", Version: version, Publisher: "Generic Company Inc. (fictional)",
 		Group: "Generic Company Inc", Run: spec.Run{Program: "hello.exe", Args: []string{"--db", `{localappdata}\Generic Company Inc\generic_company.db`}},
@@ -72,15 +82,17 @@ func manifest(version string, files memSource) *spec.Manifest {
 
 // memRegistry is the Uninstall key in memory.
 type memRegistry struct {
-	keys map[string][]Value
-	fail bool
+	keys map[string][]Value // app id -> the key's values
+	fail bool               // make Write fail, to test the registry phase's rollback
 }
 
+// Read returns a copy of id's values, so callers cannot change the stored ones.
 func (r *memRegistry) Read(id string) ([]Value, bool, error) {
 	v, ok := r.keys[id]
 	return append([]Value(nil), v...), ok, nil
 }
 
+// Write stores a copy of vals as id's whole key, or fails when fail is set.
 func (r *memRegistry) Write(id string, vals []Value) error {
 	if r.fail {
 		return errors.New("registry is read-only")
@@ -89,11 +101,14 @@ func (r *memRegistry) Write(id string, vals []Value) error {
 	return nil
 }
 
+// Delete removes id's key; a missing key is not an error, as the interface requires.
 func (r *memRegistry) Delete(id string) error {
 	delete(r.keys, id)
 	return nil
 }
 
+// dump is the whole registry as JSON, for snapshots (encoding/json sorts map keys, so equal
+// registries dump equal).
 func (r *memRegistry) dump() string {
 	b, _ := json.Marshal(r.keys)
 	return string(b)
@@ -105,10 +120,12 @@ type sandbox struct {
 	reg *memRegistry
 }
 
+// newSandbox makes an empty sandbox in a fresh temp folder, removed when t ends.
 func newSandbox(t *testing.T) *sandbox {
 	return &sandbox{pl: SandboxPlaces(t.TempDir()), reg: &memRegistry{keys: map[string][]Value{}}}
 }
 
+// dir is the test program's default install folder in the sandbox.
 func (s *sandbox) dir() string { return s.pl.Dir("Generic Company Inc", "Generic Company Hello") }
 
 // v1 is the first version: hello.exe, README.md, data/old.json and data/settings.json.
@@ -131,6 +148,8 @@ func (s *sandbox) env(src memSource) Env {
 }
 
 // install makes and applies a plan for version over whatever the sandbox holds now.
+// c.Dir is always the default folder; the uninstaller size 14 is len("MZ uninstaller"). Any error
+// fails the test.
 func (s *sandbox) install(t *testing.T, version string, src memSource, c Choices) Result {
 	t.Helper()
 	old, _ := ReadMarker(s.dir())
@@ -147,6 +166,8 @@ func (s *sandbox) install(t *testing.T, version string, src memSource, c Choices
 }
 
 // snapshot is every file under the sandbox with its hash, plus the registry.
+// Folders are listed too (with a trailing "/"), so a folder left behind by a rollback shows up.
+// WalkDir visits in lexical order, so equal sandboxes give equal strings.
 func (s *sandbox) snapshot(t *testing.T) string {
 	t.Helper()
 	var lines []string
@@ -166,4 +187,4 @@ func (s *sandbox) snapshot(t *testing.T) string {
 	return strings.Join(lines, "\n") + "\n" + s.reg.dump()
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=43274b96218fdb8fc80e154657bafb78ace23c2249166afe5d55d906002a4176 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=24f20d8db61f491f6a9ab85c311da9d74faf783b3e8345bdddb8386c8dcb0b2b ====

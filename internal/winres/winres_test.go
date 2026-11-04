@@ -1,11 +1,16 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: wizard_maker | File: internal/winres/winres_test.go
-// About: Tests for package winres.
+// About: Tests for the pure-Go encoders: resource tree, .ico files, icon groups, version info.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
 // the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
+
+// Tests for the pure-Go encoders: resource tree, .ico files, icon groups, version info.
+//
+// They need no Windows API; pe_windows_test.go checks the same bytes against Windows. Two read
+// ../../icon/app.ico, the maker's own icon (16, 32, 48 and a 256 px PNG).
 
 package winres
 
@@ -17,6 +22,8 @@ import (
 	"testing"
 )
 
+// sample covers every shape of key: numbered types and ids, two languages of one id, a named type
+// with a named resource, a numbered type with a named resource, and empty data.
 func sample() []Resource {
 	return []Resource{
 		{Type: TypeManifest, ID: 1, Lang: LangEnUS, Data: []byte("<assembly/>")},
@@ -28,6 +35,10 @@ func sample() []Resource {
 	}
 }
 
+// canon is a sorted copy of r with nil data made empty, so two lists compare equal whatever their order.
+//
+// The sort keys join a name with string(rune(number)): any total order will do here, it need not be
+// the directory order.
 func canon(r []Resource) []Resource {
 	c := append([]Resource(nil), r...)
 	for i := range c {
@@ -48,6 +59,8 @@ func canon(r []Resource) []Resource {
 	return c
 }
 
+// TestTreeRoundTrip checks that Decode(Encode(x)) gives x back, that the input order does not change
+// the bytes, and that a section cut short is an error, not a panic.
 func TestTreeRoundTrip(t *testing.T) {
 	const rva = 0x5000
 	sec := Encode(sample(), rva)
@@ -68,6 +81,8 @@ func TestTreeRoundTrip(t *testing.T) {
 	}
 }
 
+// TestIcoAndGroup checks the .ico round trip byte for byte on the real icon, the group's 14-byte
+// entries, rebuilding the .ico from the resources, and that damaged input or a missing group fails.
 func TestIcoAndGroup(t *testing.T) {
 	ico, err := os.ReadFile("../../icon/app.ico")
 	if err != nil {
@@ -105,12 +120,14 @@ func TestIcoAndGroup(t *testing.T) {
 	}
 }
 
+// TestVersionInfo checks that version info is deterministic and reads back (version and all four
+// strings), and that ParseVersion keeps a full four-part Windows version.
 func TestVersionInfo(t *testing.T) {
 	v := VersionInfo{Version: ParseVersion("1.2.3"), Strings: [][2]string{
 		{"CompanyName", "Generic Company Inc. (fictional)"}, {"FileDescription", "Generic Company Hello Setup"},
 		{"ProductName", "Generic Company Hello"}, {"ProductVersion", "1.2.3"}}}
 	b := v.Bytes()
-	if len(b)%4 != 0 && len(b)%2 != 0 {
+	if len(b)%4 != 0 && len(b)%2 != 0 { // in effect only checks the length is even
 		t.Fatalf("odd length %d", len(b))
 	}
 	if !bytes.Equal(b, v.Bytes()) {
@@ -128,4 +145,4 @@ func TestVersionInfo(t *testing.T) {
 	}
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=f52f7fbe4222a9c499c65c39951765ba5f176e5071561d2a92779c3aebd72847 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=f6a150a776c0b68bc83f482207afedf44fb6772ea7b7ce9137ce6a65fed5b22d ====

@@ -1,11 +1,18 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: wizard_maker | File: internal/maker/form.go
-// About: Part of package maker in wizard_maker.
+// About: The maker window's form as plain data, and its conversions to and from a spec.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
 // the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
+
+// The maker window's form as plain data, and its conversions to and from a spec.
+//
+// Keeping these free of Win32 lets them be tested without a window (form_test.go). The window
+// (window_windows.go) fills its controls with FormFrom, writes them back with Apply, and passes
+// the spec through Absolutize and Relativize when it saves to another folder, so paths stay
+// relative to wherever setup.json is saved.
 
 package maker
 
@@ -18,6 +25,8 @@ import (
 
 // Form is the maker window's fields as plain text and ticks. Fields the window does not show
 // (requires, purge, appUserModelId) stay in the spec untouched.
+// FormFrom and Apply convert both ways; a round trip keeps the spec's values, apart from trimming
+// spaces and the separators in Exclude.
 type Form struct {
 	Name, Version, ID, Group, Publisher string
 	Icon, License                       string
@@ -29,7 +38,8 @@ type Form struct {
 	Output                              string
 }
 
-// FormFrom fills the form from a spec.
+// FormFrom fills the form from a spec. Files is copied, so editing the form leaves s alone; Exclude
+// is joined with spaces and run.args with JoinArgs.
 func FormFrom(s *spec.Spec) Form {
 	return Form{Name: s.Name, Version: s.Version, ID: s.ID, Group: s.Group, Publisher: s.Publisher,
 		Icon: s.Icon, License: s.License, Files: append([]spec.FileRule(nil), s.Files...),
@@ -39,6 +49,9 @@ func FormFrom(s *spec.Spec) Form {
 }
 
 // Apply writes the form into the spec.
+// Text fields are trimmed; Exclude splits on spaces, commas and semicolons; Args splits with
+// SplitArgs. Only the fields Form has are written, so the others in s survive. It does not
+// validate: spec.Check does that at build time.
 func (f Form) Apply(s *spec.Spec) {
 	trim := strings.TrimSpace
 	s.Name, s.Version, s.ID, s.Group, s.Publisher = trim(f.Name), trim(f.Version), trim(f.ID), trim(f.Group), trim(f.Publisher)
@@ -51,9 +64,13 @@ func (f Form) Apply(s *spec.Spec) {
 }
 
 // SplitArgs splits a command line into arguments; double quotes keep spaces together.
+// This is a simple form of the Windows rules: spaces and tabs separate, a quote toggles quoting and
+// is dropped, and "" makes an empty argument. Backslashes are plain characters (no \" escape), so
+// Windows paths need no doubling; an argument cannot hold a double quote.
 func SplitArgs(line string) []string {
 	var out []string
 	var cur strings.Builder
+	// have: an argument has started, even if empty (a "" pair), so it is kept at the next space
 	quoted, have := false, false
 	for _, r := range line {
 		switch {
@@ -77,6 +94,8 @@ func SplitArgs(line string) []string {
 }
 
 // JoinArgs is the opposite of SplitArgs.
+// An argument that is empty or holds a space or tab is quoted; SplitArgs(JoinArgs(a)) gives a back
+// for any arguments without a double quote.
 func JoinArgs(args []string) string {
 	q := make([]string, len(args))
 	for i, a := range args {
@@ -90,6 +109,8 @@ func JoinArgs(args []string) string {
 
 // Relativize rewrites the spec's absolute paths that lie inside dir as relative ones (with "/"), so a
 // setup.json saved in dir still works when the folder is moved or checked out elsewhere.
+// It covers the icon, license, output and each file rule's From; a path outside dir (or on another
+// drive) stays absolute.
 func Relativize(s *spec.Spec, dir string) {
 	rel := func(p string) string {
 		if !filepath.IsAbs(p) {
@@ -108,8 +129,12 @@ func Relativize(s *spec.Spec, dir string) {
 }
 
 // Absolutize makes the spec's relative paths absolute (from its folder), before it moves to another.
+// The window calls it, then Relativize against the new folder, when it saves setup.json into a
+// different folder (or saves a new spec for the first time).
 func Absolutize(s *spec.Spec) {
 	abs := func(p string) string {
+		// a path with a {placeholder} (such as output's {name}) is left as written: only the
+		// build expands it
 		if p == "" || filepath.IsAbs(p) || strings.Contains(p, "{") {
 			return p
 		}
@@ -121,7 +146,8 @@ func Absolutize(s *spec.Spec) {
 	}
 }
 
-// RuleText is how the window lists a file rule.
+// RuleText is how the window lists a file rule: `from  →  to\`, or `from  →  the install folder`
+// when the rule has no To.
 func RuleText(r spec.FileRule) string {
 	to := "the install folder"
 	if r.To != "" {
@@ -130,4 +156,4 @@ func RuleText(r spec.FileRule) string {
 	return r.From + "  →  " + to
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=6817cae2c91cff9601e812ce26fe0ba3b88b6dbb5603fe6482aea3c96caf5446 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=6c762d17ca7b5805fc363893e4c0869873a6b9f0315a3f5c8f600d99424b32cc ====

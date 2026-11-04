@@ -1,11 +1,18 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: wizard_maker | File: internal/maker/cli.go
-// About: Part of package maker in wizard_maker.
+// About: The maker's command line: Main picks build, -install, -uninstall or the window.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
 // the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
+
+// The maker's command line: Main picks build, -install, -uninstall or the window.
+//
+// The maker is a windowsgui exe, so it has no console of its own: sys.NewOutput prints to the
+// console or pipe of whoever started it, or collects the text for one message box when there is
+// none (or for none at all with -quiet). Exit codes are app's: 0 OK, 1 failed, 2 bad usage or a bad
+// setup.json; -install and -uninstall return the exit code of the setup or uninstaller they ran.
 
 package maker
 
@@ -23,6 +30,8 @@ import (
 	"generic-company/wizard/internal/sys"
 )
 
+// usage is the help text printed after a usage error, by Main and by the build command. README
+// documents the same flags.
 const usage = `Usage:
   wizard-maker.exe [setup.json]                             open the window
   wizard-maker.exe build [-o out.exe] [-quiet] setup.json   make the setup.exe setup.json describes
@@ -32,12 +41,21 @@ const usage = `Usage:
   wizard-maker.exe -smoke FILE [setup.json]                 open, build, capture, report to FILE, close`
 
 // Main is the maker's command line. self is its own exe, the program part of every setup.exe.
+// args are the arguments after the exe name; the result is the process exit code.
+//
+// Steps:
+//  1. "build" as the first argument hands the rest to buildCommand.
+//  2. Parse the flags (/S counts as -quiet).
+//  3. Pick by flag, in this order: a usage error, -version, -install, -uninstall.
+//  4. Otherwise open the window, with the optional setup.json argument and -smoke file.
+//
+// -install and -uninstall pass -quiet and -root on to the setup or uninstaller they run.
 func Main(self string, args []string) int {
 	if len(args) > 0 && args[0] == "build" {
 		return buildCommand(self, args[1:])
 	}
 	fs := flag.NewFlagSet(app.ExeName, flag.ContinueOnError)
-	fs.SetOutput(io.Discard)
+	fs.SetOutput(io.Discard) // errors are reported through o with usage, not by package flag
 	version := fs.Bool("version", false, "print the version")
 	smoke := fs.String("smoke", "", "open the window, build, write a report to this file, close")
 	inst := fs.Bool("install", false, "install for this user (Start menu, Apps & features)")
@@ -47,6 +65,8 @@ func Main(self string, args []string) int {
 	quiet := fs.Bool("quiet", false, "no window or message box")
 	root := fs.String("root", "", "sandbox: install under this folder (registry goes to registry.json)")
 	err := fs.Parse(aliasQuiet(args))
+	// made after parsing so -quiet is known; no log file, and without a console o falls back to a
+	// message box
 	o, _ := sys.NewOutput(app.Name, *quiet, "")
 	pass := func(flags ...string) []string { // the flags the setup or uninstaller gets too
 		if *quiet {
@@ -58,7 +78,7 @@ func Main(self string, args []string) int {
 		return flags
 	}
 	switch {
-	case err != nil || fs.NArg() > 1:
+	case err != nil || fs.NArg() > 1: // the window takes at most one setup.json
 		if err == nil {
 			err = fmt.Errorf("unexpected %q", fs.Arg(1))
 		}
@@ -89,6 +109,11 @@ func Main(self string, args []string) int {
 	return Window(self, fs.Arg(0), *smoke)
 }
 
+// buildCommand is "wizard-maker.exe build [-o out.exe] [-quiet] setup.json": it builds the setup.exe
+// without opening the window and returns the exit code.
+// A bad command line or setup.json exits app.ExitUsage (2), with every problem listed indented under
+// the file's name; any other failure exits app.ExitFailed (1). Flags must come before setup.json,
+// because package flag stops at the first non-flag argument.
 func buildCommand(self string, args []string) int {
 	fs := flag.NewFlagSet("build", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
@@ -114,11 +139,13 @@ func buildCommand(self string, args []string) int {
 		return fail(app.ExitUsage, "%v", err)
 	}
 	if *output != "" {
+		// -o is relative to the current folder, unlike output in setup.json, which is relative to
+		// setup.json's folder
 		if s.Output, err = filepath.Abs(*output); err != nil {
 			return fail(app.ExitUsage, "%v", err)
 		}
 	}
-	stub, err := os.ReadFile(self)
+	stub, err := os.ReadFile(self) // the maker's own exe becomes the setup's program part
 	if err != nil {
 		return fail(app.ExitFailed, "%v", err)
 	}
@@ -134,6 +161,8 @@ func buildCommand(self string, args []string) int {
 }
 
 // aliasQuiet accepts /S for -quiet, as the setup and uninstaller do.
+// /S (any case) is the silent switch common Windows installers use, so scripts written for them work.
+// It returns a new slice; args is not changed.
 func aliasQuiet(args []string) []string {
 	out := make([]string, len(args))
 	for i, a := range args {
@@ -145,4 +174,4 @@ func aliasQuiet(args []string) []string {
 	return out
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=15ffcc456904daacd7b7d5283b29b72fa415c3cb9a9a1874b7b6482a49a8a0c5 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=430d8ac6ad6d42762173aa6f4b4480816f7e7aca8ee6a02b61bb75c0b6533d57 ====

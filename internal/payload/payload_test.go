@@ -1,11 +1,16 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: wizard_maker | File: internal/payload/payload_test.go
-// About: Tests for package payload.
+// About: Tests for package payload: writing, reading and refusing damaged payloads.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
 // the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
+
+// Tests for package payload: writing, reading and refusing damaged payloads.
+//
+// The program part is this test binary itself (stub), a real PE file, so Layout sees genuine
+// headers and sections. Each test writes a payload to a temp file and opens it again.
 
 package payload
 
@@ -35,11 +40,14 @@ func stub(t *testing.T) []byte {
 	return b
 }
 
+// entries is a small payload: a setup.json, a compressible text file and a binary file in a subfolder.
 func entries() []Entry {
 	return []Entry{Bytes("setup.json", []byte(`{"id":"x"}`)), Bytes("files/a.txt", bytes.Repeat([]byte("abc"), 1000)),
 		Bytes("files/sub/b.bin", []byte{0, 1, 2, 3})}
 }
 
+// write writes prog with a payload of kind and e to a new file name in a temp folder and returns
+// its path; any error fails the test.
 func write(t *testing.T, name string, prog []byte, kind Kind, e []Entry) string {
 	t.Helper()
 	var buf bytes.Buffer
@@ -53,6 +61,8 @@ func write(t *testing.T, name string, prog []byte, kind Kind, e []Entry) string 
 	return p
 }
 
+// TestRoundTrip pins what Open reads back from Write: the kind and stub length, ReadAll with its
+// limit, CopyChecked refusing a wrong hash or size, Has, StubBytes, and the 8-byte file alignment.
 func TestRoundTrip(t *testing.T) {
 	prog := stub(t)
 	path := write(t, "setup.exe", prog, Setup, entries())
@@ -94,6 +104,8 @@ func TestRoundTrip(t *testing.T) {
 	}
 }
 
+// TestDeterministic pins that the same program and entries give byte-identical files, which the
+// fixed zip dates and fixed entry order make possible.
 func TestDeterministic(t *testing.T) {
 	prog := stub(t)
 	a, _ := os.ReadFile(write(t, "a.exe", prog, Setup, entries()))
@@ -103,6 +115,8 @@ func TestDeterministic(t *testing.T) {
 	}
 }
 
+// TestPlainProgramHasNoPayload pins that an exe with nothing appended (this test binary) opens as
+// Kind None rather than as damaged: that is how the maker knows it is the maker.
 func TestPlainProgramHasNoPayload(t *testing.T) {
 	self, _ := os.Executable()
 	p, err := Open(self)
@@ -115,6 +129,9 @@ func TestPlainProgramHasNoPayload(t *testing.T) {
 	}
 }
 
+// TestDamaged pins that each kind of damage gives ErrDamaged: a cut-off file, junk or a few bytes
+// after the program, and one flipped byte in the magic, the offset, the zip or the kind. The trailer
+// starts 32 bytes from the end, so len-32 is the magic, len-24 the kind and len-16 the offset.
 func TestDamaged(t *testing.T) {
 	prog := stub(t)
 	good, _ := os.ReadFile(write(t, "setup.exe", prog, Uninstall, entries()))
@@ -142,12 +159,16 @@ func TestDamaged(t *testing.T) {
 	}
 }
 
+// flip returns a copy of b with byte i changed (XOR 0x5a flips four of its bits), leaving b as is.
 func flip(b []byte, i int) []byte {
 	c := append([]byte{}, b...)
 	c[i] ^= 0x5a
 	return c
 }
 
+// TestSignatureAfterPayload pins that a payload is still found when an Authenticode certificate table
+// follows it. It fakes what signtool does with a 16-byte table (its first u32 is the table's own
+// length) and patches the security directory of this PE32+ test binary to point at it.
 func TestSignatureAfterPayload(t *testing.T) {
 	good, _ := os.ReadFile(write(t, "setup.exe", stub(t), Setup, entries()))
 	// what signtool does: append a certificate table and point the security directory at it
@@ -175,6 +196,9 @@ func TestSignatureAfterPayload(t *testing.T) {
 	}
 }
 
+// TestRejectsEscapingNames pins that Write refuses entry names that could unpack outside the
+// install folder or be read differently on Windows: "..", a backslash, an absolute or drive path,
+// and a folder entry.
 func TestRejectsEscapingNames(t *testing.T) {
 	for _, name := range []string{"../evil.txt", `files\a.txt`, "/abs", "C:/x", "dir/"} {
 		var buf bytes.Buffer
@@ -185,6 +209,9 @@ func TestRejectsEscapingNames(t *testing.T) {
 }
 
 // FromFile reads its file when the payload is written, not when the entry is made (rule 11).
+//
+// It also pins that the file is closed after packing (it can be deleted) and that a missing file
+// fails the write.
 func TestFromFile(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "late.txt")
@@ -209,4 +236,4 @@ func TestFromFile(t *testing.T) {
 	}
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=e5a382063a34c53da9db403aeab3fd3886eec1ed83994f349fe394bc01bc9443 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=9defa049544578b75c99555b4ae86bb4ed2c1d88e7382c0e064c1911ab4576ce ====

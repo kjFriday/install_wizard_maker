@@ -1,11 +1,17 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: wizard_maker | File: internal/winres/pe_windows_test.go
-// About: Tests for package winres.
+// About: Tests that check winres against Windows itself, on the real wizard-maker.exe.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
 // the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
+
+// Tests that check winres against Windows itself, on the real wizard-maker.exe.
+//
+// testexe builds the maker once (skipped with -short); its .rsrc comes from the .syso. The tests
+// check that Go's linker still puts that section last (SetResources depends on it) and that a
+// rewritten exe loads its resources through the Windows API and still runs.
 
 package winres
 
@@ -32,12 +38,15 @@ func maker(t *testing.T) []byte {
 	return b
 }
 
+// TestMain runs the tests, then deletes the exe testexe built.
 func TestMain(m *testing.M) {
 	code := m.Run()
 	testexe.Cleanup()
 	os.Exit(code)
 }
 
+// The Windows API functions the tests read resources with: the loader's own (kernel32) and the
+// version-info ones Explorer uses (version.dll).
 var (
 	kernel32    = syscall.NewLazyDLL("kernel32.dll")
 	version     = syscall.NewLazyDLL("version.dll")
@@ -54,6 +63,10 @@ var (
 )
 
 // loaded reads one resource the way Windows does.
+//
+// The exe is mapped as data only (nothing runs), then FindResourceEx, LoadResource and LockResource
+// give a pointer into the mapping, copied out before FreeLibrary. typ and id are numbers passed in
+// place of strings (MAKEINTRESOURCE). The result is nil when there is no such resource.
 func loaded(t *testing.T, path string, typ, id, lang uintptr) []byte {
 	t.Helper()
 	p, _ := syscall.UTF16PtrFromString(path)
@@ -76,6 +89,8 @@ func loaded(t *testing.T, path string, typ, id, lang uintptr) []byte {
 	return out
 }
 
+// versionString is one string of an exe's version info as Explorer reads it: GetFileVersionInfo,
+// then VerQueryValue on \StringFileInfo\040904B0\<key>. It is "" when missing.
 func versionString(t *testing.T, path, key string) string {
 	t.Helper()
 	p, _ := syscall.UTF16PtrFromString(path)
@@ -95,6 +110,7 @@ func versionString(t *testing.T, path, key string) string {
 	return syscall.UTF16ToString(unsafe.Slice(val, size))
 }
 
+// TestResourceSectionIsLast guards SetResources' one assumption: Go's linker puts .rsrc last.
 func TestResourceSectionIsLast(t *testing.T) {
 	exe := maker(t)
 	h, err := parsePE(exe)
@@ -106,6 +122,10 @@ func TestResourceSectionIsLast(t *testing.T) {
 	}
 }
 
+// TestSetResourcesLoadsInWindows rewrites the maker's resources the way a build does (one icon image,
+// the kept manifest, new version info) and checks: a payload appended to the input is dropped, the
+// output is deterministic, Windows finds the new icon and not the old second image, the manifest and
+// FileDescription read back, and the exe still runs (-version).
 func TestSetResourcesLoadsInWindows(t *testing.T) {
 	exe := maker(t)
 	old, err := Resources(exe)
@@ -158,4 +178,4 @@ func TestSetResourcesLoadsInWindows(t *testing.T) {
 	}
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=8d034b872473f786a78db121e13f8669b3fbaafdb3fedde25c1e2290d520a05c ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=d1767b060c2dbcf4bb4ba6bdb50a256c97df06a0f12e26591bf7f1a01bb3335e ====

@@ -8,6 +8,9 @@
 // ========================================================================
 
 // Version comparison: dotted numeric versions, part by part.
+//
+// The wizard and package install use CompareVersions to tell an upgrade from a repair or a refused
+// downgrade; checkIdentity uses atoi to keep each part within 16 bits.
 
 package spec
 
@@ -28,6 +31,9 @@ func atoi(s string) int {
 }
 
 // CompareVersions compares dotted numeric versions ("1.10" > "1.9"; missing parts count as 0).
+//
+// The result is -1 when a is older, 0 when equal ("1.2" equals "1.2.0"), 1 when newer. Parts are
+// compared as numbers, not text, which is why "1.10" is newer than "1.9".
 func CompareVersions(a, b string) int {
 	pa, pb := strings.Split(a, "."), strings.Split(b, ".")
 	for i := 0; i < len(pa) || i < len(pb); i++ {
@@ -48,4 +54,4 @@ func CompareVersions(a, b string) int {
 	return 0
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=a74f46310a4144d8d3b31dd2f9e261310698cf6ce0a65d86ff0fe08b4ef42105 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=416684476c5e02706b05c240142c817037d381b6d82dcb4a23cfb1965a7484c6 ====

@@ -1,11 +1,28 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: wizard_maker | File: internal/wizard/uninstall_windows.go
-// About: Part of package wizard in wizard_maker.
+// About: The uninstaller's window: the Confirm, Removing and Done pages.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
 // the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
+
+// The uninstaller's window: the Confirm, Removing and Done pages.
+//
+// An uninstall.exe shows it when run without -quiet. RunUninstall (uninstall.go) calls uninstallWindow once it holds the lock shared with setup. The
+// window is the same frame as the install wizard's (frame_windows.go), with UninstallFlow's three
+// pages. The work is Uninstaller.Remove; this file shows the choice to purge settings, the progress
+// and the outcome.
+//
+// The main flow:
+//  1. uninstallWindow builds the pages and shows Confirm.
+//  2. Uninstall (Next) starts Remove on a worker goroutine and disables Cancel: a removal is not
+//     undone half-way.
+//  3. wake, on the UI thread, moves the bar and at the end fills the Done page.
+//  4. When the window closes, uninstallWindow releases the lock and, after a success, starts the
+//     removal of the exe itself (RemoveAfterExit) as the very last step.
+//
+// Threading: as in the install wizard, the worker writes only the fields under mu and calls Wake.
 
 package wizard
 
@@ -32,17 +49,32 @@ type uninstallUI struct {
 	status, bar, detail *win.Control
 	doneTitle, doneBody *win.Control
 
+	// mu guards done, total, file, finished, res and err: the worker goroutine writes them and wake
+	// reads them on the UI thread.
 	mu       sync.Mutex
-	done     int64
-	total    int64
+	done     int64 // marker entries handled so far
+	total    int64 // marker entries in all
 	file     string
-	finished bool
+	finished bool // Remove has returned; res and err hold its outcome
 	res      install.Result
 	err      error
-	hold     chan struct{}
-	code     int
+	hold     chan struct{} // -smoke: the worker waits for it, so the removing page is captured first
+	code     int           // the exit code uninstallWindow returns (app.Exit...)
 }
 
+// uninstallWindow runs the uninstaller's window for u and returns the process exit code.
+//
+// release frees the lock RunUninstall took; it is called on every path, before RemoveAfterExit. The
+// exit code starts as app.ExitCancelled, so closing on the Confirm page counts as a cancel.
+//
+// Steps:
+//  1. Read the program's icon (app.ico) from the install folder, drawn on the banner and header; a
+//     read error is ignored.
+//  2. Make the frame; a failure is reported through out, as no window exists.
+//  3. Build the pages, hook up the callbacks, show Confirm, then walk it (-smoke) or run the message
+//     loop.
+//  4. Release the lock; after a finished, successful removal, hand the exe and its folders to
+//     RemoveAfterExit.
 func uninstallWindow(u *Uninstaller, o uninstallOptions, out *sys.Output, release func()) int {
 	ico, _ := os.ReadFile(filepath.Join(u.Dir, install.IconName))
 	f, err := newFrame(u.Info.Name+" Uninstall", UninstallFlow(), ico)
@@ -52,10 +84,11 @@ func uninstallWindow(u *Uninstaller, o uninstallOptions, out *sys.Output, releas
 		out.Done(sys.Error)
 		return app.ExitFailed
 	}
-	out.SetQuiet(true)
+	out.SetQuiet(true) // the window shows the outcome; the log, if any, still gets every line
 	ui := &uninstallUI{frame: f, u: u, out: out, code: app.ExitCancelled}
 	ui.build()
 	f.w.OnCommand = ui.command
+	// the close box acts as Cancel; false keeps the window open, and cancelPressed closes it itself
 	f.w.OnClose = func() bool { ui.cancelPressed(); return false }
 	f.w.OnWake = ui.wake
 	ui.show()
@@ -72,6 +105,12 @@ func uninstallWindow(u *Uninstaller, o uninstallOptions, out *sys.Output, releas
 	return ui.code
 }
 
+// build makes the three pages' controls up front, in the frame's 96-dpi units.
+//
+// Confirm says what goes and what stays, shows the folder and offers to purge settings; the purge
+// box is disabled, and says why, when the marker lists no settings folders. Removing has a status
+// line, the bar and the current entry. Done's title and body are filled in by wake. The buttons come
+// last, so Tab reaches them last.
 func (ui *uninstallUI) build() {
 	w, info := ui.w, ui.u.Info
 	ui.header(Confirm, "Uninstall "+info.Name, fmt.Sprintf("%s %s will be removed from your computer.", info.Name, info.Version))
@@ -96,6 +135,8 @@ func (ui *uninstallUI) build() {
 	ui.buttons()
 }
 
+// command handles a WM_COMMAND: only Next (IDOK) and Cancel (IDCANCEL) matter here, as the purge box
+// is read once, when the removal starts. code, the notification code, is not needed.
 func (ui *uninstallUI) command(id, code int) {
 	switch id {
 	case win.IDOK:
@@ -105,6 +146,8 @@ func (ui *uninstallUI) command(id, code int) {
 	}
 }
 
+// nextPressed handles Next: Uninstall on Confirm starts the removal, Close on Done closes the window.
+// Nothing happens while Next is disabled (it is during the removal).
 func (ui *uninstallUI) nextPressed() {
 	if !ui.next.Enabled() {
 		return
@@ -119,6 +162,8 @@ func (ui *uninstallUI) nextPressed() {
 	}
 }
 
+// cancelPressed handles Cancel and the close box: on Done it closes, during the removal it does
+// nothing, and on Confirm it closes with app.ExitCancelled without asking (nothing has changed yet).
 func (ui *uninstallUI) cancelPressed() {
 	switch {
 	case ui.flow.Last():
@@ -130,10 +175,17 @@ func (ui *uninstallUI) cancelPressed() {
 	}
 }
 
+// start runs the removal on a worker goroutine; wake shows its progress and its end.
+//
+// Steps:
+//  1. Disable Cancel and reset the bar (0 to 1000, in thousandths).
+//  2. Read the purge box on the UI thread, before the worker starts.
+//  3. On the worker: wait for hold under -smoke, run Remove with a progress callback that stores the
+//     counts and wakes the UI thread, then store the outcome and wake it once more.
 func (ui *uninstallUI) start() {
 	ui.cancel.Enable(false)
 	ui.bar.SetProgress(0, 1000)
-	purge := ui.purge.Enabled() && ui.purge.Checked()
+	purge := ui.purge.Enabled() && ui.purge.Checked() // a disabled box never purges, ticked or not
 	go func() {
 		if ui.hold != nil {
 			<-ui.hold
@@ -151,6 +203,14 @@ func (ui *uninstallUI) start() {
 	}()
 }
 
+// wake runs on the UI thread after the worker calls Window.Wake: it shows the progress or, once the
+// removal has ended, its outcome on the Done page.
+//
+// Steps:
+//  1. Copy the worker's fields under mu.
+//  2. Still running: move the bar and show the current entry.
+//  3. Ended: set the exit code and fill Done, with the error and a hint to run it again, or with the
+//     files kept because they changed after setup installed them.
 func (ui *uninstallUI) wake() {
 	ui.mu.Lock()
 	done, total, file, finished, res, err := ui.done, ui.total, ui.file, ui.finished, ui.res, ui.err
@@ -162,7 +222,7 @@ func (ui *uninstallUI) wake() {
 		ui.detail.SetText(file)
 		return
 	}
-	if ui.flow.Page() != Removing {
+	if ui.flow.Page() != Removing { // the outcome was shown already; a late wake-up changes nothing
 		return
 	}
 	ui.code = exitCode(err)
@@ -185,6 +245,13 @@ func (ui *uninstallUI) wake() {
 	ui.show()
 }
 
+// smoke walks the three pages as a user would, capturing each, with the purge box left unticked; the
+// removal runs for real (so pass the -root the install used).
+//
+// file is the JSON report; the captures go beside it. The capture names ("confirm", "removing",
+// "done") are what TestWizardWindows expects. The step limit of 10 keeps a page that never moves on
+// from hanging the walk. An error writing the report is not returned: the caller reads ui.code, and
+// the test notices a missing report.
 func (ui *uninstallUI) smoke(file string) {
 	s := win.NewSmoke(ui.w, file, "uninstall", ui.title)
 	ui.hold = make(chan struct{})
@@ -204,4 +271,4 @@ func (ui *uninstallUI) smoke(file string) {
 	s.Write(ui.code)
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=a3d863e75b083d96dc6287550c5b23ad4f09cc4fd12b84f44f1c37863cf479b0 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=cbf86043298d980736e7aa995942121ef3302d0fbbb70144c45187353b30b23d ====

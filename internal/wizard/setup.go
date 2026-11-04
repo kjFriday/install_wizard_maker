@@ -1,14 +1,31 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: wizard_maker | File: internal/wizard/setup.go
-// About: Package wizard is what a built setup.exe runs (the install wizard) and the uninstall.exe...
+// About: Package wizard is what a built setup.exe and the uninstall.exe it leaves behind run.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
 // the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
 
-// Package wizard is what a built setup.exe runs (the install wizard) and the uninstall.exe it leaves
-// behind: their command lines, their windows, and the steps both share.
+// Package wizard is what a built setup.exe and the uninstall.exe it leaves behind run.
+//
+// It holds their command lines, their windows, and the steps both share. main opens its own exe's
+// payload and, by its kind, calls RunSetup (this file) or RunUninstall (uninstall.go). The window
+// side is in the *_windows.go files: frame_windows.go (the shared chrome), setup_windows.go and
+// uninstall_windows.go; flow.go is their page order, free of windows.
+//
+// The main flow of a setup.exe (RunSetup):
+//  1. Parse the flags (parseSetup); /S counts as -quiet.
+//  2. openSetup reads setup.json and app.ico from the payload, picks the real places and HKCU (or a
+//     -root sandbox with a registry.json), and finds any earlier install to upgrade or repair. It
+//     refuses to run elevated and refuses to downgrade.
+//  3. -version prints what this setup installs and stops.
+//  4. Take the per-program lock (lockName) that the uninstaller also takes.
+//  5. Without -quiet, hand over to the window (setupWindow); with it, quietSetup checks and installs.
+//
+// Types: setupOptions (the parsed flags), Setup (one run), uninstallInfo (uninstall.json).
+//
+// Start reading at RunSetup.
 package wizard
 
 import (
@@ -31,11 +48,16 @@ import (
 	"generic-company/wizard/internal/sys"
 )
 
+// setupOptions are a setup.exe's flags, as parseSetup reads them; setupUsage describes each.
 type setupOptions struct {
 	quiet, desktop, noStartMenu, version bool
 	dir, root, log, smoke                string
 }
 
+// parseSetup reads a setup.exe's arguments (after the exe name) into setupOptions.
+//
+// The flag set neither prints nor exits: errors come back for RunSetup to show with setupUsage. /S
+// is first rewritten to -quiet (aliases), and any argument left over after the flags is an error.
 func parseSetup(args []string) (setupOptions, error) {
 	var o setupOptions
 	fs := flag.NewFlagSet("setup", flag.ContinueOnError)
@@ -67,6 +89,7 @@ func aliases(args []string) []string {
 	return out
 }
 
+// setupUsage is shown after a flag error. It leaves out -smoke (for the tests) and -version.
 const setupUsage = `Usage: setup.exe [-quiet] [-dir PATH] [-desktop-shortcut] [-no-start-menu] [-root DIR] [-log FILE]
   -quiet (or /S)      no window: install with the defaults; this accepts the license
   -dir PATH           install folder (a new or empty one)
@@ -76,21 +99,37 @@ const setupUsage = `Usage: setup.exe [-quiet] [-dir PATH] [-desktop-shortcut] [-
   -log FILE           append what happens to FILE`
 
 // Setup is one run of a setup.exe: what it installs, from where, to where.
+//
+// openSetup makes one; the window or quietSetup then calls Check and Install.
 type Setup struct {
-	M        *spec.Manifest
-	P        *payload.File
-	Places   install.Places
-	Registry install.Registry
-	Old      *install.Marker // the install this one upgrades or repairs
-	Choices  install.Choices
-	Icon     []byte
-	Python   string
+	M        *spec.Manifest   // setup.json from the payload
+	P        *payload.File    // this exe's payload: the program's files
+	Places   install.Places   // the folders to use (the user's, or a -root sandbox's)
+	Registry install.Registry // HKCU, or a sandbox's registry.json
+	Old      *install.Marker  // the install this one upgrades or repairs
+	Choices  install.Choices  // folder and shortcuts; the defaults until the user changes them
+	Icon     []byte           // app.ico from the payload
+	Python   string           // pythonw.exe for a Python program, filled in by Check
 }
 
 // Upgrade reports whether an earlier install of the program is there.
 func (s *Setup) Upgrade() bool { return s.Old != nil }
 
 // openSetup reads the payload and looks at the computer: places, registry, any earlier install, defaults.
+//
+// It may return a Setup together with an error, so the caller can still title its messages with the
+// program's name. Refusals are *install.Refusal; a bad setup.json is payload.ErrDamaged.
+//
+// Steps:
+//  1. Read setup.json (at most 16 MiB) and app.ico (at most 4 MiB) from the payload.
+//  2. With -root, everything goes into that sandbox folder and its registry.json; elevation is not
+//     checked there. Otherwise refuse to run as administrator (setup installs per user) and use the
+//     user's folders and HKCU.
+//  3. Look for an earlier install. An upgrade keeps its folder and its shortcuts as they are; a
+//     marker with no shortcuts and no installer comes from another installer, so the manifest's
+//     defaults apply. A new install takes -dir, if given.
+//  4. Apply -desktop-shortcut and -no-start-menu over that.
+//  5. Refuse a setup older than the installed version.
 func openSetup(p *payload.File, o setupOptions) (*Setup, error) {
 	b, err := p.ReadAll("setup.json", 16<<20)
 	if err != nil {
@@ -149,6 +188,9 @@ func openSetup(p *payload.File, o setupOptions) (*Setup, error) {
 }
 
 // Check is everything to settle before installing: the folder, and Python when the program needs it.
+//
+// The folder is checked only for a new install (an upgrade reuses its own). For a Python program it
+// finds pythonw.exe once and keeps it in s.Python. Problems the user can fix are *install.Refusal.
 func (s *Setup) Check() error {
 	if s.Old == nil {
 		if err := install.CheckFolder(s.Choices.Dir, s.M.ID, s.Places); err != nil {
@@ -166,6 +208,17 @@ func (s *Setup) Check() error {
 }
 
 // Install does it. progress and cancelled may be nil.
+//
+// progress gets the bytes done so far, the total and the current file; cancelled is polled as files
+// are unpacked, and true puts everything back and returns install.ErrCancelled. Both are called on
+// the goroutine that runs Install. Call Check first.
+//
+// Steps:
+//  1. Build uninstall.exe: this exe's own stub with a small payload naming the program.
+//  2. Plan the install (install.MakePlan) from the manifest, places, choices and any old install.
+//  3. Refuse, with Retry, when the drive has less free space than the files, the uninstaller and a
+//     16 MiB margin.
+//  4. Apply the plan as one transaction: it completes, or leaves everything as it was.
 func (s *Setup) Install(progress func(done, total int64, file string), cancelled func() bool) (install.Result, error) {
 	s.Choices.Python = s.Python
 	stub, err := s.P.StubBytes()
@@ -210,6 +263,12 @@ func (s *Setup) LaunchTarget() (file, args, dir string) {
 	return program, strings.Join(quoted, " "), s.Choices.Dir
 }
 
+// quoteForShell quotes one argument for a command line: an empty one, or one with a space, tab or
+// quote, goes in double quotes with each inner quote as \".
+//
+// Known limitation: backslashes are left alone. By the usual Windows rules (CommandLineToArgvW and the
+// C runtime) backslashes just before a quote escape it, so an argument ending in a backslash, such as
+// a folder "C:\My Apps\", reaches the program with the closing quote taken as text.
 func quoteForShell(s string) string {
 	if s == "" || strings.ContainsAny(s, " \t\"") {
 		return `"` + strings.ReplaceAll(s, `"`, `\"`) + `"`
@@ -218,6 +277,9 @@ func quoteForShell(s string) string {
 }
 
 // human is a size for people.
+//
+// Below 1 MiB it is whole KB rounded up (so 1 byte is "1 KB"); below 1 GiB, MB with one decimal; then
+// GB. The units are binary (1 KB = 1024 bytes).
 func human(n int64) string {
 	switch {
 	case n < 1024*1024:
@@ -236,6 +298,8 @@ type uninstallInfo struct {
 	Maker   string `json:"maker"`
 }
 
+// makeUninstaller is the uninstall.exe for m: stub (this exe's program part, see StubBytes) and an
+// Uninstall payload holding only uninstall.json. The same program thus runs as the uninstaller.
 func makeUninstaller(stub []byte, m *spec.Manifest) ([]byte, error) {
 	info, _ := json.MarshalIndent(uninstallInfo{ID: m.ID, Name: m.Name, Version: m.Version, Maker: m.Maker}, "", "  ")
 	var b bytes.Buffer
@@ -262,6 +326,11 @@ func exitCode(err error) int {
 func lockName(id string) string { return "GenericCompany.Wizard." + id }
 
 // RunSetup is a setup.exe's main.
+//
+// self is the exe's path, p its payload, args the arguments after the exe name. It returns the exit
+// code (app.Exit*). Its own messages go through sys.Output: to the console when there is one, else one
+// message box at the end (none with -quiet), and to the -log file too. See the package comment for
+// the steps.
 func RunSetup(self string, p *payload.File, args []string) int {
 	o, err := parseSetup(args)
 	out, logErr := sys.NewOutput("Setup", o.quiet, o.log)
@@ -300,6 +369,8 @@ func RunSetup(self string, p *payload.File, args []string) int {
 	return quietSetup(s, out)
 }
 
+// quietSetup installs with no window (-quiet or /S): Check, Install, then report the result and the
+// files kept because they were changed since installed or were not installed by this setup.
 func quietSetup(s *Setup, out *sys.Output) int {
 	if err := s.Check(); err != nil {
 		out.Printf("%v", err)
@@ -325,4 +396,4 @@ func quietSetup(s *Setup, out *sys.Output) int {
 	return app.ExitOK
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=c621fdc00ab66e59a4db03bdfe4edf469fbe26d8b3ff9ea9a28861c871260504 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=19dcf1921c2188b0a118dc1b637185b7738b90469a9598a4e1fee8a9de7d5cae ====

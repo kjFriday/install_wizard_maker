@@ -1,11 +1,16 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: wizard_maker | File: internal/win/win_windows_test.go
-// About: Tests for package win.
+// About: Tests for the toolkit: struct sizes, the icon scaler and a real window's round trip.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
 // the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
+
+// Tests for the toolkit: struct sizes, the icon scaler and a real window's round trip.
+//
+// TestWindowRoundTrip shows a real window on this desktop for a moment, so these tests need an
+// interactive Windows session.
 
 package win
 
@@ -18,6 +23,8 @@ import (
 	"unsafe"
 )
 
+// TestStructSizes pins the Go mirrors of Win32 structs to their 64-bit sizes from the Windows SDK
+// headers: a wrong size makes Windows read or write past the struct, or reject it (cbSize checks).
 func TestStructSizes(t *testing.T) {
 	for name, got := range map[string]uintptr{
 		"WNDCLASSEXW": unsafe.Sizeof(wndClassEx{}), "MSG": unsafe.Sizeof(msg{}), "LOGFONTW": unsafe.Sizeof(logFont{}),
@@ -33,6 +40,8 @@ func TestStructSizes(t *testing.T) {
 	}
 }
 
+// TestScaleBGRA checks nearest-neighbour doubling and the byte order and premultiplication: opaque
+// red becomes B 0, G 0, R 255, A 255, and half-transparent blue (alpha 128) becomes B 128 with A 128.
 func TestScaleBGRA(t *testing.T) {
 	img := image.NewNRGBA(image.Rect(0, 0, 2, 2))
 	img.SetNRGBA(0, 0, color.NRGBA{R: 255, A: 255})
@@ -44,8 +53,12 @@ func TestScaleBGRA(t *testing.T) {
 	}
 }
 
+// TestWindowRoundTrip drives a real window: a check box click reaches OnCommand, text set is text
+// read (a multi-line edit turns \n into \r\n), five Wakes from goroutines merge into one to five
+// OnWake calls, Info sees the long label overflow its 16-unit box, and Capture and ClientSize follow
+// the DPI and text size.
 func TestWindowRoundTrip(t *testing.T) {
-	runtime.LockOSThread()
+	runtime.LockOSThread() // a window belongs to the thread that made it; its messages come only there
 	defer runtime.UnlockOSThread()
 	w, err := New("win test", 300, 200, 0)
 	if err != nil {
@@ -99,4 +112,4 @@ func TestWindowRoundTrip(t *testing.T) {
 	}
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=37b64a8bef3a38dd1bdbc7d965e332d863ea1887daa338fbf7a71f8e4c570f12 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=4d09e126cc6046b56ee44084ebb94f2f0c262532f49c8dd2ebb6d210b333d65c ====

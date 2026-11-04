@@ -1,11 +1,21 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: wizard_maker | File: main_test.go
-// About: Tests for package main.
+// About: End-to-end tests: real exes built, installed, upgraded and uninstalled in sandbox folders.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
 // the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
+
+// End-to-end tests: real exes built, installed, upgraded and uninstalled in sandbox folders.
+//
+// Each test builds the maker as released (testexe.Maker), makes a setup.exe from the fixture in
+// testdata/fixture (build) and runs it as a separate process, always with -root, so nothing touches
+// the real Start menu, desktop or HKCU: the registry goes to <root>\registry.json instead. The
+// window tests use -smoke, which walks the pages by itself and writes a JSON report with a PNG per
+// page (checkSmoke reads it). All of them are skipped with -short, as testexe.Maker skips them.
+//
+// Helpers: runExe, build, registry, files, gone, checkSmoke. Start reading at TestQuietSetupEndToEnd.
 
 package main
 
@@ -29,6 +39,7 @@ import (
 	"generic-company/wizard/internal/testexe"
 )
 
+// TestMain runs the tests, then removes the maker that testexe built for them.
 func TestMain(m *testing.M) {
 	code := m.Run()
 	testexe.Cleanup()
@@ -36,6 +47,9 @@ func TestMain(m *testing.M) {
 }
 
 // runExe starts an exe and returns its output and exit code.
+//
+// stdout and stderr are combined. A non-zero exit is a result, not a failure; only an exe that cannot
+// be started at all fails the test.
 func runExe(t *testing.T, exe string, args ...string) (string, int) {
 	t.Helper()
 	out, err := exec.Command(exe, args...).CombinedOutput()
@@ -50,6 +64,10 @@ func runExe(t *testing.T, exe string, args ...string) (string, int) {
 }
 
 // build makes the fixture's setup.exe, after edit has changed its setup.json.
+//
+// dir is a fixture folder from testexe.Fixture; edit (nil for none) changes setup.json as a generic
+// JSON map, which is written back in place. The setup.exe goes to a fresh temp folder; its path is
+// returned. A failed build fails the test.
 func build(t *testing.T, dir string, edit func(map[string]any)) string {
 	t.Helper()
 	file := filepath.Join(dir, "setup.json")
@@ -68,6 +86,8 @@ func build(t *testing.T, dir string, edit func(map[string]any)) string {
 	return out
 }
 
+// registry reads a sandbox's registry.json (reg.File) as key path to value name to value; nil when the
+// file does not exist. Numbers come back as float64, as encoding/json decodes them.
 func registry(t *testing.T, root string) map[string]map[string]any {
 	t.Helper()
 	var data map[string]map[string]any
@@ -81,8 +101,12 @@ func registry(t *testing.T, root string) map[string]map[string]any {
 	return data
 }
 
+// key is the fixture's Apps & features entry as registry.json names it: the HKCU Uninstall key
+// plus the fixture's app id.
 const key = `HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\GenericCompany.WizardFixture`
 
+// files lists every file under dir, as slash-separated paths relative to it, in WalkDir's (lexical)
+// order; empty folders do not show. A missing dir gives nil.
 func files(t *testing.T, dir string) []string {
 	var out []string
 	filepath.WalkDir(dir, func(p string, d fs.DirEntry, err error) error {
@@ -95,6 +119,9 @@ func files(t *testing.T, dir string) []string {
 	return out
 }
 
+// gone reports whether path disappears within the given time, checking every 200 ms. The uninstaller
+// removes itself and its folder from a delayed cmd.exe (install.DeleteAfterExit) after it exits, so
+// tests wait for that rather than checking at once.
 func gone(path string, within time.Duration) bool {
 	for deadline := time.Now().Add(within); time.Now().Before(deadline); time.Sleep(200 * time.Millisecond) {
 		if _, err := os.Stat(path); errors.Is(err, fs.ErrNotExist) {
@@ -104,6 +131,10 @@ func gone(path string, within time.Duration) bool {
 	return false
 }
 
+// TestQuietSetupEndToEnd pins a quiet install and uninstall: the files, marker, registry values,
+// shortcut and log setup leaves, and that uninstall keeps a changed and an added file but removes the
+// rest, the registry entry and the Start-menu group. The root's space, & and % put paths through the
+// quoting in UninstallString and in DeleteAfterExit's cmd.exe script.
 func TestQuietSetupEndToEnd(t *testing.T) {
 	fixture := testexe.Fixture(t)
 	setup := build(t, fixture, nil)
@@ -117,6 +148,7 @@ func TestQuietSetupEndToEnd(t *testing.T) {
 	if got := files(t, dir); !reflect.DeepEqual(got, []string{"README.md", "app.ico", "data/settings.json", "hello.exe", "install.json", "uninstall.exe"}) {
 		t.Fatalf("installed %v", got)
 	}
+	// five hashes: the three packed files, app.ico and uninstall.exe; install.json does not list itself
 	m, err := install.ReadMarker(dir)
 	if err != nil || m.AppID != "GenericCompany.WizardFixture" || len(m.SHA256) != 5 || !strings.HasPrefix(m.Installer, "Generic Company Wizard Maker") {
 		t.Fatalf("marker %+v %v", m, err)
@@ -157,6 +189,12 @@ func TestQuietSetupEndToEnd(t *testing.T) {
 	}
 }
 
+// TestUpgradeDowngradeAndRefusals pins the version rules and the refusals: an upgrade (run with /S,
+// the -quiet alias) removes an unchanged file the new version drops and keeps the desktop shortcut
+// the first install chose; an
+// older setup is refused (exit 4); a folder whose install.json names another app id is refused and
+// left untouched; and a setup.exe missing its last 100 bytes (a cut-short download) reports itself
+// damaged with exit 1.
 func TestUpgradeDowngradeAndRefusals(t *testing.T) {
 	fixture := testexe.Fixture(t)
 	v1 := build(t, fixture, nil)
@@ -203,6 +241,9 @@ func TestUpgradeDowngradeAndRefusals(t *testing.T) {
 	}
 }
 
+// smokeReport is the part of win.SmokeReport (the -smoke JSON) these tests read, decoded from the
+// file the child process wrote. A control's X, Y, W, H, Visible and Fits have no json tag;
+// encoding/json matches the report's keys to them case-insensitively.
 type smokeReport struct {
 	Role    string `json:"role"`
 	IconSet bool   `json:"iconSet"`
@@ -259,6 +300,7 @@ func checkSmoke(t *testing.T, file string, pages []string) smokeReport {
 			}
 			for _, j := range shown {
 				o := p.Controls[j]
+				// two rectangles overlap when each starts before the other ends, on both axes
 				if c.X < o.X+o.W && o.X < c.X+c.W && c.Y < o.Y+o.H && o.Y < c.Y+c.H {
 					t.Errorf("%s/%s: %q overlaps %q", r.Role, p.Name, c.Text, o.Text)
 				}
@@ -425,7 +467,7 @@ func TestTakeOverASiblingInstall(t *testing.T) {
 	if s, err := shell.ReadLink(link); err != nil || s.Target != filepath.Join(dir, "hello.exe") {
 		t.Fatalf("shortcut not rewritten: %v %+v", err, s)
 	}
-	// and its uninstaller then removes our files but not the old install's unknown one
+	// and its uninstaller then removes the files this setup installed but not the old install's unknown one
 	if out, code := runExe(t, filepath.Join(dir, "uninstall.exe"), "-quiet", "-root", root); code != 0 {
 		t.Fatalf("uninstall: %s", out)
 	}
@@ -435,4 +477,4 @@ func TestTakeOverASiblingInstall(t *testing.T) {
 	}
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=8ce0f34811d0dc06142887f7b176eed76a679417768dc959a1ae33b7b59f5a01 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=aa648c6d9c00d8d12d8c2066248c7fc67e39565e4b80951710c0f6ff0e6c306f ====

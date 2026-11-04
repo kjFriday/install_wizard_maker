@@ -1,11 +1,38 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: wizard_maker | File: internal/wizard/setup_windows.go
-// About: Part of package wizard in wizard_maker.
+// About: The install wizard's window: the pages a setup.exe shows when it runs without -quiet.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
 // the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
+
+// The install wizard's window: the pages a setup.exe shows when it runs without -quiet.
+//
+// RunSetup (setup.go) calls setupWindow once it holds the setup lock and the user did not ask for
+// -quiet. The window is a frame (frame_windows.go) whose pages follow SetupFlow (flow.go): Welcome,
+// License, Install Folder, Shortcuts, Installing and Finish, each one only when the manifest asks
+// for it. The work itself is Setup.Check and Setup.Install (setup.go); this file only gathers the
+// user's choices and shows the progress and the outcome.
+//
+// The main flow:
+//  1. setupWindow makes the frame, builds every page's controls (build) and shows the first page.
+//  2. command routes the buttons: nextPressed checks the current page's input and moves on;
+//     cancelPressed asks before leaving or stopping.
+//  3. On the page before Installing, Next runs Setup.Check again and start launches the install on a
+//     worker goroutine.
+//  4. The worker reports progress through Window.Wake; wake runs on the UI thread, moves the bar and,
+//     at the end, fills the Finish page (or offers Retry for a refusal the user can put right).
+//  5. finish starts the program when Launch is ticked and closes the window; setupWindow returns
+//     ui.code, the process exit code.
+//
+// With -smoke, smoke walks the same pages by itself and writes a report instead of waiting for a user
+// (main_test.go's TestWizardWindows reads it).
+//
+// Threading: every control is touched only on the UI thread (the thread main locked in init). The
+// worker goroutine writes only the fields under mu and calls Wake.
+//
+// Start reading at setupWindow.
 
 package wizard
 
@@ -26,10 +53,14 @@ import (
 )
 
 // setupUI is the install wizard's window.
+//
+// It embeds the shared frame (window, flow, pages, Back/Next/Cancel) and adds the controls this
+// wizard fills in or reads back, grouped by page in the order the pages come. The fields after mu
+// are the worker's report to the UI thread.
 type setupUI struct {
 	*frame
-	s   *Setup
-	out *sys.Output
+	s   *Setup      // the run: manifest, payload, places, the user's choices
+	out *sys.Output // the log (and, without a window, the message box); quiet while the window is up
 
 	welcomeBody, welcomePath                    *win.Control
 	accept                                      *win.Control
@@ -38,18 +69,33 @@ type setupUI struct {
 	status, bar, detail                         *win.Control
 	finishTitle, finishBody, finishPath, launch *win.Control
 
+	// mu guards done, total, file, finished, res and err: the worker goroutine writes them and wake
+	// reads them on the UI thread.
 	mu       sync.Mutex
-	done     int64
-	total    int64
+	done     int64 // bytes unpacked so far
+	total    int64 // bytes to unpack in all; 0 until the worker's first report
 	file     string
-	finished bool
+	finished bool // Install has returned; res and err hold its outcome
 	res      install.Result
 	err      error
-	stop     atomic.Bool
+	stop     atomic.Bool   // set by Cancel during the install; Install polls it through stop.Load
 	hold     chan struct{} // -smoke: the worker waits for it, so the progress page is captured first
-	code     int
+	code     int           // the exit code setupWindow returns (app.Exit...)
 }
 
+// setupWindow runs the install wizard's window for s and returns the process exit code.
+//
+// o supplies -smoke; out is the run's output, set quiet here because the window shows the outcome
+// itself (a -log file still gets every line). The exit code starts as app.ExitCancelled, so closing
+// the window before the install counts as a cancel.
+//
+// Steps:
+//  1. Choose the pages (SetupFlow) from the manifest and whether this is an upgrade.
+//  2. Make the frame; a failure here is reported through out, as no window exists.
+//  3. Build every page's controls, hook up the window's callbacks and show the first page.
+//  4. With -smoke, walk the pages by code (smoke); otherwise show the window and run its message
+//     loop until it closes.
+//  5. A panic caught in a window callback (Window.Panic) is logged and counts as a failure.
 func setupWindow(s *Setup, o setupOptions, out *sys.Output) int {
 	m := s.M
 	flow := SetupFlow(m.License != "", m.AskFolder, m.Shortcuts.Ask, s.Upgrade())
@@ -63,6 +109,7 @@ func setupWindow(s *Setup, o setupOptions, out *sys.Output) int {
 	ui := &setupUI{frame: f, s: s, out: out, code: app.ExitCancelled}
 	ui.build()
 	f.w.OnCommand = ui.command
+	// the close box acts as Cancel; false keeps the window open, and cancelPressed closes it itself
 	f.w.OnClose = func() bool { ui.cancelPressed(); return false }
 	f.w.OnWake = ui.wake
 	ui.show()
@@ -78,6 +125,22 @@ func setupWindow(s *Setup, o setupOptions, out *sys.Output) int {
 	return ui.code
 }
 
+// build makes every page's controls up front and files each under its page; frame.show then shows
+// one page's set at a time.
+//
+// Positions are in the frame's 96-dpi units (frame_windows.go): interior pages use the area below
+// the white header (Y 70 and down, X 20 to 483), exterior pages the area right of the banner
+// (bodyX, bodyW). The "&" in a caption marks its Alt-key access letter.
+//
+// Steps:
+//  1. Welcome: the title, a body set by the checks below, and the folder when it is already settled.
+//  2. Run Setup.Check once, so a problem the user cannot fix on a later page blocks setup here.
+//  3. License: the text and the "I accept" box that gates Next.
+//  4. Install Folder: the folder box with Browse, the space line and a problem line.
+//  5. Shortcuts: the two boxes, ticked from the defaults (or the earlier install's choices).
+//  6. Installing: a status line, the progress bar and the current file.
+//  7. Finish: title and body (filled in by wake), the folder and Launch; then the buttons, last so
+//     Tab reaches them last.
 func (ui *setupUI) build() {
 	w, m, s := ui.w, ui.s.M, ui.s
 	_, ui.welcomeBody = ui.exterior(Welcome, fmt.Sprintf("Welcome to the %s Setup Wizard", m.Name), "")
@@ -136,6 +199,8 @@ func (ui *setupUI) build() {
 	ui.buttons()
 }
 
+// flowHasFolder reports whether this run shows the Install Folder page (setup.json's askFolder,
+// and not an upgrade, which keeps its folder).
 func (ui *setupUI) flowHasFolder() bool {
 	for _, p := range ui.flow.Pages() {
 		if p == Folder {
@@ -151,6 +216,9 @@ func (ui *setupUI) block(err error) {
 	ui.welcomeBody.SetText(err.Error() + "\n\nClick Cancel to leave.")
 }
 
+// welcomeText is the welcome page's body for the three cases: a new install, a repair (the same
+// version installed) and an upgrade (an older version installed). A downgrade never gets here:
+// openSetup refuses it.
 func (ui *setupUI) welcomeText() string {
 	m, s := ui.s.M, ui.s
 	switch {
@@ -165,6 +233,8 @@ func (ui *setupUI) welcomeText() string {
 		"Click Next to continue.", m.Name, s.Old.Version, m.Version)
 }
 
+// updateSpace refreshes the folder page's line with the space the program needs and, when the drive
+// of the typed folder can be read, the space free on it. It is called as the folder text changes.
 func (ui *setupUI) updateSpace() {
 	need := ui.s.M.Size()
 	text := fmt.Sprintf("Space needed: %s.", human(need))
@@ -174,6 +244,8 @@ func (ui *setupUI) updateSpace() {
 	ui.space.SetText(text)
 }
 
+// command handles a WM_COMMAND from the window: id is the control (or IDOK/IDCANCEL for Next and
+// Cancel, which Enter and Esc also send) and code its notification code.
 func (ui *setupUI) command(id, code int) {
 	switch id {
 	case win.IDOK:
@@ -190,6 +262,7 @@ func (ui *setupUI) command(id, code int) {
 	case idBrowse:
 		ui.browse()
 	case idFolder:
+		// EN_CHANGE: the user edited the folder box; an old problem no longer applies
 		if code == win.ENChange {
 			ui.problem.SetText("")
 			ui.updateSpace()
@@ -197,6 +270,9 @@ func (ui *setupUI) command(id, code int) {
 	}
 }
 
+// browse opens the folder picker at the parent of the typed folder and puts the choice in the folder
+// box, with the program's name appended unless the picked folder already ends in it. Cancelling the
+// picker, or an error, leaves the box as it was.
 func (ui *setupUI) browse() {
 	start := strings.TrimSpace(ui.folder.TextValue())
 	picked, err := shell.PickFolder(ui.w.HWND, "Install "+ui.s.M.Name+" in…", filepath.Dir(start))
@@ -209,6 +285,15 @@ func (ui *setupUI) browse() {
 	ui.folder.SetText(picked)
 }
 
+// nextPressed handles Next (or Install, or Finish, by the page).
+//
+// Steps:
+//  1. Ignore it while Next is disabled: IDOK can also come from the keyboard (Enter, through
+//     IsDialogMessage), not only from the button.
+//  2. Read back the current page's input: the folder must pass install.CheckFolder (else the problem
+//     shows under the box and Next stays on the page); the shortcut boxes go into Choices.
+//  3. On the last page, finish. On the page before Installing, check everything once more (the
+//     folder or Python may have changed since build) and start the install. Otherwise move on.
 func (ui *setupUI) nextPressed() {
 	if !ui.next.Enabled() {
 		return
@@ -245,11 +330,17 @@ func (ui *setupUI) nextPressed() {
 	}
 }
 
+// cancelPressed handles Cancel and the close box.
+//
+// On the Finish page it acts as Finish (Launch included). While installing it asks, then sets stop
+// and disables Cancel; the window stays open until the worker ends and wake shows the outcome. Before
+// the install it asks, then closes with app.ExitCancelled.
 func (ui *setupUI) cancelPressed() {
 	switch {
 	case ui.flow.Last():
 		ui.finish()
 	case ui.flow.Working():
+		// install.Apply honours stop only while unpacking; once files move into place it runs to the end
 		if !ui.stop.Load() && ui.ask("Stop installing? Setup will put back everything it changed.") {
 			ui.stop.Store(true)
 			ui.cancel.Enable(false)
@@ -264,6 +355,15 @@ func (ui *setupUI) cancelPressed() {
 }
 
 // start runs the install on a worker goroutine; wake shows its progress and its end.
+//
+// It is also called again for Retry, so it resets the shared fields first. The bar runs 0 to 1000 so
+// byte counts above the progress control's int range still map onto it.
+//
+// Steps:
+//  1. Show what is happening (install or upgrade) and log it.
+//  2. Reset the worker's fields under mu.
+//  3. On the worker: wait for hold under -smoke, run Setup.Install with a progress callback that
+//     stores the counts and wakes the UI thread, then store the outcome and wake it once more.
 func (ui *setupUI) start() {
 	m := ui.s.M
 	verb := "Installing"
@@ -294,6 +394,16 @@ func (ui *setupUI) start() {
 	}()
 }
 
+// wake runs on the UI thread after the worker calls Window.Wake: it shows the progress or, once the
+// install has ended, its outcome.
+//
+// Steps:
+//  1. Copy the worker's fields under mu, so the lock is not held while controls repaint.
+//  2. Still running: move the bar (in thousandths) and show the current file.
+//  3. Ended: a refusal with Retry (a file in use, too little space) asks Retry or Cancel; Retry starts
+//     again. Under -smoke (hold set) there is no one to ask, so the outcome stands.
+//  4. Set the exit code and fill the Finish page for success, cancel or failure; Launch shows only
+//     after a success.
 func (ui *setupUI) wake() {
 	ui.mu.Lock()
 	done, total, file, finished, res, err := ui.done, ui.total, ui.file, ui.finished, ui.res, ui.err
@@ -305,7 +415,7 @@ func (ui *setupUI) wake() {
 		ui.detail.SetText(file)
 		return
 	}
-	if ui.flow.Page() != Progress {
+	if ui.flow.Page() != Progress { // the outcome was shown already; a late wake-up changes nothing
 		return
 	}
 	var r *install.Refusal
@@ -342,6 +452,9 @@ func (ui *setupUI) wake() {
 	ui.launch.Show(err == nil)
 }
 
+// finish closes the wizard, first starting the program when the install succeeded and Launch is
+// ticked. LaunchTarget prefers the new shortcut, so the program starts with its own taskbar identity
+// and working folder; a failure to start it is shown but does not change the exit code.
 func (ui *setupUI) finish() {
 	if ui.code == app.ExitOK && ui.launch.Visible() && ui.launch.Checked() {
 		file, args, dir := ui.s.LaunchTarget()
@@ -354,6 +467,18 @@ func (ui *setupUI) finish() {
 
 // smoke walks every page as a user would, capturing each, with the license accepted, the defaults
 // kept and Launch unticked; the install runs for real (so pass -root).
+//
+// file is the JSON report; the PNG captures go beside it (win.NewSmoke). The result is the exit code
+// the walk ended with, or app.ExitFailed when the report cannot be written. The capture names
+// ("welcome", "license", "license-accepted", ... "finish") are what TestWizardWindows expects.
+//
+// Steps:
+//  1. Set hold, so the worker waits until the Installing page has been captured.
+//  2. Loop over the pages, at most 20 steps, so a page that never moves on cannot hang the walk.
+//  3. License: capture before and after ticking "I accept". Installing: capture, release the
+//     worker, pump messages until the page changes. Finish: untick Launch, capture, press Finish.
+//     Any other page: capture and press Next, or leave with app.ExitRefused when Next is disabled.
+//  4. Close the window and write the report.
 func (ui *setupUI) smoke(file string) int {
 	s := win.NewSmoke(ui.w, file, "setup", ui.title)
 	ui.hold = make(chan struct{})
@@ -378,16 +503,16 @@ func (ui *setupUI) smoke(file string) int {
 			if !ui.next.Enabled() { // blocked: leave the way a user would
 				ui.code = app.ExitRefused
 				ui.w.Close()
-				break
+				break // leaves the switch; the loop then ends because the window is closed
 			}
 			ui.next.Click()
 		}
 	}
-	ui.w.Close()
+	ui.w.Close() // a no-op when the walk already closed it
 	if err := s.Write(ui.code); err != nil {
 		return app.ExitFailed
 	}
 	return ui.code
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=1167de3d493d14304e99dce9d01b7f33d753e5f2e0768f42dafa3e314e80b3b8 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=21754cbc7cef6331f6d1105876c71e9fbd5682c1b7621752c6b59411138e059e ====

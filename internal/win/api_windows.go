@@ -1,21 +1,42 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: wizard_maker | File: internal/win/api_windows.go
-// About: Package win is a small Win32 toolkit over syscall (no cgo, no libraries): one window...
+// About: Package win is a small Win32 toolkit over syscall (no cgo, no libraries).
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
 // the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
 
-// Package win is a small Win32 toolkit over syscall (no cgo, no libraries): one window class, native
-// controls, Segoe UI fonts, per-monitor DPI scaling, dialog-style keyboard handling, wake-ups from
-// worker goroutines, pixel-art drawing and window captures.
+// Package win is a small Win32 toolkit over syscall (no cgo, no libraries).
+//
+// It offers one window class, native controls, Segoe UI fonts, per-monitor DPI scaling,
+// dialog-style keyboard handling, wake-ups from worker goroutines, pixel-art drawing and window
+// captures. The maker's form window (internal/maker) and the wizard's pages (internal/wizard) are
+// built from it; every role's -smoke walk uses its captures and control reports.
+//
+// Win32 in short: a window is a handle (HWND) with a window procedure that Windows calls with
+// messages (WM_PAINT, WM_COMMAND ...). Controls such as buttons and edit boxes are child windows of
+// predefined classes ("BUTTON", "EDIT") that report to their parent with WM_COMMAND. A thread's
+// message loop takes messages off its queue and dispatches them. Here every Win32 function is
+// called through syscall's lazy DLL procs, and structs are laid out by hand to match the C headers.
 //
 // Everything here runs on the UI thread (main locks it), except Window.Wake.
+//
+// Files: api_windows.go (DLL procs, constants, structs, small helpers), window_windows.go (the
+// window, fonts, message loop), control_windows.go (controls), menu_windows.go (menu bar and
+// shortcuts), draw_windows.go (painting, icons, captures, control reports) and smoke_windows.go
+// (the -smoke walk). Start reading at window_windows.go's New.
 package win
 
 import "syscall"
 
+// The system DLLs and every Win32 function the package calls, named after the function (the W
+// forms, which take UTF-16). Lazy DLLs load, and functions are looked up, on first call, so a
+// function missing on an older Windows (GetDpiForWindow needs Windows 10 1607) fails only when
+// called; callers that care check Find first.
+//
+// comctl32's SetWindowSubclass and DefSubclassProc subclass a control (Text uses them); msimg32's
+// AlphaBlend draws with per-pixel transparency (Painter.Pixels).
 var (
 	user32   = syscall.NewLazyDLL("user32.dll")
 	gdi32    = syscall.NewLazyDLL("gdi32.dll")
@@ -99,6 +120,14 @@ var (
 )
 
 // Window styles and messages used here.
+//
+// The values are the winuser.h ones (WS_*, WS_EX_*, SW_*, SWP_*, WM_*, DLGC_*, PM_*, COLOR_*). A few
+// need a word: WS_GROUP and WS_MINIMIZEBOX share a bit (one means something for controls, the other
+// for top-level windows); WS_EX_CONTROLPARENT lets IsDialogMessage tab into the window's controls;
+// CW_USEDEFAULT lets Windows pick the first position before New centres the window. WM_USER and
+// WM_APP start the ranges free for a control class's and an application's own messages:
+// DM_GETDEFID is WM_USER, and its answer carries DC_HASDEFID ("SK" in ASCII) in the high word to
+// say the low word is a real id.
 const (
 	wsChild         = 0x40000000
 	wsVisible       = 0x10000000
@@ -147,6 +176,10 @@ const (
 )
 
 // Control styles.
+//
+// SS_* for STATIC, BS_* for BUTTON, ES_* for EDIT, LBS_* for LISTBOX and CBS_* for COMBOBOX
+// (winuser.h). SS_PATHELLIPSIS shortens a path in its middle; SS_NOPREFIX shows "&" as itself
+// instead of underlining the next letter.
 const (
 	ssLeft          = 0x0000
 	ssNoPrefix      = 0x0080
@@ -169,6 +202,9 @@ const (
 )
 
 // Control messages.
+//
+// BM_* for buttons, EM_* for edit boxes, LB_* for list boxes and CB_* for combo boxes (winuser.h);
+// the progress bar's PBM_* are WM_USER-based (commctrl.h).
 const (
 	bmGetCheck     = 0x00F0
 	bmSetCheck     = 0x00F1
@@ -189,6 +225,9 @@ const (
 )
 
 // Notification codes for OnCommand.
+//
+// A control's WM_COMMAND carries one of these in the high word of wParam. They are per class, so
+// LBN_SELCHANGE and CBN_SELCHANGE share the value 1.
 const (
 	BNClicked     = 0
 	ENChange      = 0x0300
@@ -204,6 +243,9 @@ const (
 )
 
 // Message box flags and answers.
+//
+// MB_* button sets, icons and MB_DEFBUTTON2 (the second button is the default) combine with "|";
+// the ID* values are what Window.MessageBox returns (winuser.h).
 const (
 	MBOK           = 0x00
 	MBOKCancel     = 0x01
@@ -235,7 +277,7 @@ const (
 	smCxMenuCheck           = 71
 	spiGetNonClientMetrics  = 0x0029
 	monitorDefaultToNearest = 2
-	gclpHIcon               = ^uintptr(13) // GCLP_HICON (-14)
+	gclpHIcon               = ^uintptr(13) // GCLP_HICON (-14): ^13 is -14 in two's complement
 	fwBold                  = 700
 )
 
@@ -249,6 +291,10 @@ const (
 )
 
 // Painting and captures (DrawText, AlphaBlend, PrintWindow).
+//
+// BLENDFUNCTION is four bytes (BlendOp, BlendFlags, SourceConstantAlpha, AlphaFormat) passed by
+// value; read as a little-endian uint32 they give blendSrcAlpha. PW_RENDERFULLCONTENT (Windows 8.1
+// and later) also captures content drawn by DirectComposition.
 const (
 	dtWordBreak         = 0x0010
 	dtSingleLine        = 0x0020
@@ -259,10 +305,18 @@ const (
 	pwRenderFullContent = 2
 )
 
+// The Win32 structs below are laid out field for field as in the C headers (64-bit Windows), so
+// their addresses can be passed straight to the API; win_windows_test.go checks their sizes (all
+// but POINT's).
+
+// point is POINT: a position in pixels.
 type point struct{ x, y int32 }
 
+// rect is RECT: left and top are inside, right and bottom one past the edge, in pixels.
 type rect struct{ left, top, right, bottom int32 }
 
+// msg is MSG, one queued message as GetMessage and PeekMessage fill it in. Go's alignment matches
+// C's: padding after message, and private (lPrivate) closes the 48-byte struct.
 type msg struct {
 	hwnd    uintptr
 	message uint32
@@ -273,6 +327,8 @@ type msg struct {
 	private uint32
 }
 
+// wndClassEx is WNDCLASSEXW, the description RegisterClassExW registers: the window procedure,
+// icons, cursor and background shared by every window of the class. size must be set to its size.
 type wndClassEx struct {
 	size       uint32
 	style      uint32
@@ -288,6 +344,8 @@ type wndClassEx struct {
 	iconSm     uintptr
 }
 
+// logFont is LOGFONTW, a font description for CreateFontIndirectW. height is in pixels (negative
+// means the character height without internal leading); faceName is NUL-terminated UTF-16.
 type logFont struct {
 	height, width, escapement, orientation, weight int32
 	italic, underline, strikeOut, charSet          byte
@@ -295,6 +353,9 @@ type logFont struct {
 	faceName                                       [32]uint16
 }
 
+// nonClientMetrics is NONCLIENTMETRICSW, which SystemParametersInfoForDpi fills in with the sizes
+// and fonts of window frames, menus and message boxes at a given DPI; messageFont is the one the
+// window's fonts start from. It includes paddedBorderWidth (Windows Vista and later).
 type nonClientMetrics struct {
 	size                                                                uint32
 	borderWidth, scrollWidth, scrollHeight, captionWidth, captionHeight int32
@@ -306,6 +367,8 @@ type nonClientMetrics struct {
 	paddedBorderWidth                                                   int32
 }
 
+// paintStruct is PAINTSTRUCT, filled in by BeginPaint: hdc is the device context to paint on and
+// paint the area that needs it.
 type paintStruct struct {
 	hdc         uintptr
 	erase       int32
@@ -315,6 +378,8 @@ type paintStruct struct {
 	rgbReserved [32]byte
 }
 
+// monitorInfo is MONITORINFO: the monitor's whole rectangle and its work area (without the
+// taskbar), in virtual-screen pixels. size must be set before GetMonitorInfoW.
 type monitorInfo struct {
 	size    uint32
 	monitor rect
@@ -322,6 +387,8 @@ type monitorInfo struct {
 	flags   uint32
 }
 
+// bitmapInfoHeader is BITMAPINFOHEADER (40 bytes), the description of a device-independent bitmap.
+// A negative height means rows run from the top; compression 0 is BI_RGB (uncompressed).
 type bitmapInfoHeader struct {
 	size          uint32
 	width, height int32
@@ -334,6 +401,8 @@ type bitmapInfoHeader struct {
 	clrImportant  uint32
 }
 
+// accel is ACCEL, one row of an accelerator table: flags (FVIRTKEY, FCONTROL), the key, and the
+// command id sent as WM_COMMAND. The blank byte is the padding C puts before the WORD fields.
 type accel struct {
 	virt byte
 	_    byte
@@ -341,6 +410,8 @@ type accel struct {
 	cmd  uint16
 }
 
+// utf16 is s as a NUL-terminated UTF-16 string for a Win32 call; a string holding a NUL, which
+// cannot be passed, becomes "?".
 func utf16(s string) *uint16 {
 	p, err := syscall.UTF16PtrFromString(s)
 	if err != nil {
@@ -349,18 +420,29 @@ func utf16(s string) *uint16 {
 	return p
 }
 
+// send is SendMessageW: it delivers message m to window h, waits for the window procedure, and
+// returns its result.
+//
+// The go:uintptrescapes directive keeps memory whose address is passed in w or l alive and in
+// place for the call, as for syscall functions.
+//
 //go:uintptrescapes
 func send(h uintptr, m uint32, w, l uintptr) uintptr {
 	r, _, _ := procSendMessage.Call(h, uintptr(m), w, l)
 	return r
 }
 
+// instance is the exe's module handle (HINSTANCE), which window classes and resources belong to.
 func instance() uintptr {
 	h, _, _ := procGetModuleHandle.Call(0)
 	return h
 }
 
+// loword is the low 16 bits of a message parameter; with hiword it splits one (in WM_COMMAND's wParam,
+// the id and the notification code; WM_DPICHANGED's wParam has the new DPI in both halves).
 func loword(v uintptr) int { return int(uint16(v)) }
+
+// hiword is the high 16 bits of a message parameter; see loword.
 func hiword(v uintptr) int { return int(uint16(v >> 16)) }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=02f019d86d7aa2ee340d182eca6e70221a39a273aa061045aaf5d2ef47bb9332 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=59696715957a98e2b93ca715948baf64eea2c456e4d03d3d24cf8416ed7e3b87 ====

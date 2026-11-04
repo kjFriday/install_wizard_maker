@@ -1,11 +1,17 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: wizard_maker | File: internal/spec/spec_test.go
-// About: Tests for package spec.
+// About: Tests for package spec: setup.json, its checks, placeholders, versions and manifests.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
 // the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
+
+// Tests for package spec: setup.json, its checks, placeholders, versions and manifests.
+//
+// They cover loading and saving, every Check rule, installed-path and purge-path rules,
+// placeholders, version order and the manifest's tamper checks. Most start from valid, a passing
+// spec in a temp folder, and break one thing.
 
 package spec
 
@@ -17,6 +23,7 @@ import (
 	"testing"
 )
 
+// writeTree writes files (slash-separated name -> content) under dir, making folders as needed.
 func writeTree(t *testing.T, dir string, files map[string]string) {
 	t.Helper()
 	for name, body := range files {
@@ -31,6 +38,9 @@ func writeTree(t *testing.T, dir string, files map[string]string) {
 }
 
 // valid is a setup.json that passes Check, in a temp folder with its files.
+//
+// The tree has files the exclude patterns drop (__pycache__, test_*), a license with a byte-order
+// mark, a single-file rule into "docs", and args with a placeholder.
 func valid(t *testing.T) *Spec {
 	dir := t.TempDir()
 	writeTree(t, dir, map[string]string{
@@ -54,6 +64,8 @@ func valid(t *testing.T) *Spec {
 	return s
 }
 
+// TestLoadDefaultsAndUnknownFields pins that a sparse file with a BOM keeps New's defaults and that
+// a misspelled field ("shortcut") is an error.
 func TestLoadDefaultsAndUnknownFields(t *testing.T) {
 	dir := t.TempDir()
 	file := filepath.Join(dir, "setup.json")
@@ -71,6 +83,7 @@ func TestLoadDefaultsAndUnknownFields(t *testing.T) {
 	}
 }
 
+// TestSaveRoundTrip pins that Save then Load gives back an equal spec, its folder included.
 func TestSaveRoundTrip(t *testing.T) {
 	s := valid(t)
 	file := filepath.Join(s.Dir(), "setup.json")
@@ -86,6 +99,8 @@ func TestSaveRoundTrip(t *testing.T) {
 	}
 }
 
+// TestValidSpec pins the passing spec's sorted sources (excluded files gone), the BOM-less license
+// and the default output name.
 func TestValidSpec(t *testing.T) {
 	s := valid(t)
 	if err := s.Check(); err != nil {
@@ -112,6 +127,8 @@ func TestValidSpec(t *testing.T) {
 	}
 }
 
+// TestCheckReportsProblems breaks the valid spec one way per case and checks that Check names the
+// problem; the cases cover each rule in check.go and sources.go.
 func TestCheckReportsProblems(t *testing.T) {
 	cases := []struct {
 		name string
@@ -159,6 +176,8 @@ func TestCheckReportsProblems(t *testing.T) {
 	}
 }
 
+// TestCheckInstalledPath pins which installed paths pass: setup's own names only at the top,
+// escapes, drives, device names, bad endings and the 160-character cap (81 "a/" parts plus "b").
 func TestCheckInstalledPath(t *testing.T) {
 	for p, ok := range map[string]bool{
 		"a.txt": true, "sub/dir/a.txt": true, "install.json/x": true, "www/app.ico": true,
@@ -173,6 +192,7 @@ func TestCheckInstalledPath(t *testing.T) {
 	}
 }
 
+// TestCompareVersions pins numeric (not text) order and that missing parts count as 0.
 func TestCompareVersions(t *testing.T) {
 	for _, c := range []struct {
 		a, b string
@@ -184,6 +204,8 @@ func TestCompareVersions(t *testing.T) {
 	}
 }
 
+// TestExpand pins expansion of known placeholders and errors for an unknown one and for unpaired
+// or doubled braces.
 func TestExpand(t *testing.T) {
 	v := ArgVars(`C:\App`, "Hello", "1.0", `C:\L`, `C:\R`)
 	got, err := Expand(`{app}\main.py --v {version}`, v)
@@ -197,6 +219,8 @@ func TestExpand(t *testing.T) {
 	}
 }
 
+// TestPurgePath pins both roots and either slash, and refuses a bare or shallow root, a ".." escape,
+// an unknown root and an absolute path.
 func TestPurgePath(t *testing.T) {
 	got, err := PurgePath(`{localappdata}\Generic Company Inc\GenericCompany.Hello`, `C:\U\Local`, `C:\U\Roaming`)
 	if err != nil || got != `C:\U\Local\Generic Company Inc\GenericCompany.Hello` {
@@ -213,6 +237,8 @@ func TestPurgePath(t *testing.T) {
 	}
 }
 
+// TestManifestCheck pins the manifest's JSON round trip and that ParseManifest refuses each kind of
+// tampering a setup.exe could carry; each case edits a copy with its own Files slice.
 func TestManifestCheck(t *testing.T) {
 	s := valid(t)
 	files := []File{{Path: "hello.exe", Size: 2, SHA256: strings.Repeat("ab", 32)},
@@ -269,4 +295,4 @@ func TestSetDir(t *testing.T) {
 	}
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=8d48d758e685c3ec96bd6868822f798337510962b9cddeb1f36a52527c186e4a ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=5ee9e39e6392a9a4b62fccd9c5f677b3120b24c49c69a518f21d99bbf04c1d69 ====

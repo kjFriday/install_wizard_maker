@@ -1,14 +1,28 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: wizard_maker | File: internal/winres/winres.go
-// About: Package winres reads and writes Windows resources: .ico files, icon groups, version info...
+// About: Package winres reads and writes Windows resources in pure Go.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
 // the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
 
-// Package winres reads and writes Windows resources: .ico files, icon groups, version info, and the
-// resource section of a PE file, all in pure Go so a setup.exe is the same bytes on every machine.
+// Package winres reads and writes Windows resources in pure Go.
+//
+// It handles .ico files, icon groups, version info and the resource section of a PE file, with no
+// rc.exe or Windows API, so a setup.exe is the same bytes on every machine. The maker
+// (internal/maker, build.go) uses it to turn its own exe into a setup.exe: it reads the stub's
+// resources (Resources), keeps the manifest, puts in the program's icon (ParseICO, IconResources) and
+// version info (VersionInfo), and writes them back (SetResources). ICOFromResources takes the icon
+// back out of a packed program.
+//
+// A Windows program keeps its resources (icons, the manifest, version info ...) in the .rsrc section
+// as a three-level tree: resource type, then name or id, then language. Each leaf points at the data
+// by its in-memory address (RVA). Decode and Encode read and write that tree (winres.go); pe.go finds
+// and replaces the section in an exe; version.go encodes VS_VERSIONINFO. The layouts follow
+// Microsoft's "PE Format" specification, section "The .rsrc Section".
+//
+// Types: Resource (one leaf of the tree), IconImage (one image of an .ico), VersionInfo.
 package winres
 
 import (
@@ -22,23 +36,24 @@ import (
 
 // Resource types and the language every resource here is written in.
 const (
-	TypeIcon      = 3
-	TypeGroupIcon = 14
-	TypeVersion   = 16
-	TypeManifest  = 24
-	LangEnUS      = 0x0409
+	TypeIcon      = 3      // RT_ICON: one image of an icon
+	TypeGroupIcon = 14     // RT_GROUP_ICON: an icon's list of images, pointing at RT_ICONs by id
+	TypeVersion   = 16     // RT_VERSION: VS_VERSIONINFO
+	TypeManifest  = 24     // RT_MANIFEST: the application manifest (Common Controls 6, DPI awareness)
+	LangEnUS      = 0x0409 // LANGID English (United States)
 )
 
 // Resource is one resource. A named type or name (rare) is kept in TypeName / Name instead of the number.
 type Resource struct {
-	Type     uint32
+	Type     uint32 // the type id (TypeIcon ...), when TypeName is empty
 	TypeName string
-	ID       uint32
+	ID       uint32 // the resource id, when Name is empty
 	Name     string
-	Lang     uint32
+	Lang     uint32 // a LANGID; 0 is language-neutral
 	Data     []byte
 }
 
+// le reads and writes the little-endian numbers every PE and resource structure uses.
 var le = binary.LittleEndian
 
 // The resource section's layout, after Microsoft's "PE Format": a tree of directories three levels
@@ -56,6 +71,16 @@ const (
 )
 
 // Decode reads a resource section's tree. rva is the section's address: data entries point by address.
+//
+// sec starts at the root directory. Every offset read from it is checked, so a damaged section gives
+// an error, never a panic; the data is copied out of sec.
+//
+// How the tree is read: a directory is a 16-byte header whose last two u16s count its named and its
+// numbered entries; the 8-byte entries follow it, named ones first. An entry's first u32 is an id,
+// or, with the high bit set, the offset of a length-prefixed UTF-16 name. Its second u32 is, with the
+// high bit set, the offset of a subdirectory, else the offset of a data entry (the data's RVA and
+// size). Offsets are from the section start; data addresses are RVAs, hence rva. walk recurses one
+// level per directory, keeping the path of (type, name, language) keys it came by.
 func Decode(sec []byte, rva uint32) ([]Resource, error) {
 	var out []Resource
 	type level struct {
@@ -109,6 +134,7 @@ func Decode(sec []byte, rva uint32) ([]Resource, error) {
 	return out, nil
 }
 
+// dirString reads a directory string at off: a u16 count of UTF-16 units, then the units (no NUL).
 func dirString(sec []byte, off uint32) (string, error) {
 	if int(off)+2 > len(sec) {
 		return "", errors.New("resource name out of range")
@@ -124,11 +150,15 @@ func dirString(sec []byte, off uint32) (string, error) {
 	return string(utf16.Decode(u)), nil
 }
 
+// key is one level's key in the tree: a name when name is set, else the number num.
 type key struct {
 	num  uint32
 	name string
 }
 
+// less orders keys as the PE format wants a directory's entries: named ones first, then ids.
+// Names compare as Go strings, byte by byte; for ASCII names that is the same order as comparing their
+// UTF-16 units. Encode and ICOFromResources both sort with it.
 func less(a, b key) bool { // named entries first (by name), then numbers ascending
 	if (a.name != "") != (b.name != "") {
 		return a.name != ""
@@ -141,6 +171,19 @@ func less(a, b key) bool { // named entries first (by name), then numbers ascend
 
 // Encode writes a resource section for address rva: directories, data entries, names, then the data,
 // each blob 8-byte aligned. The order is fixed, so equal resources give equal bytes.
+//
+// Two resources with the same type, name and language keep the last one's data. The directories'
+// time stamps and versions stay 0, again so the bytes depend on nothing but res.
+//
+// Steps:
+//  1. Group res into a tree: type, then name or id, then language, each level sorted by less.
+//  2. Size every part first: all the directories (each 16 bytes plus 8 per entry), then the 16-byte
+//     data entries, then the names (each name once, a u16 length and its UTF-16 units), and round
+//     up to 8; the data blobs start there.
+//  3. Write the directories depth first (the root, a type's name directory, each of its names'
+//     language directories, then the next type): each entry points at its subdirectory (high bit
+//     set) or, at the language level, at its data entry; a data entry holds rva plus the blob's offset.
+//  4. Write the names, then append the blobs, each padded to 8 bytes.
 func Encode(res []Resource, rva uint32) []byte {
 	type tree map[key]map[key]map[uint32][]byte
 	t := tree{}
@@ -251,7 +294,7 @@ func Encode(res []Resource, rva uint32) []byte {
 			}
 		}
 	}
-	for n, at := range strPos {
+	for n, at := range strPos { // map order does not matter: every name's place is already fixed
 		u := utf16.Encode([]rune(n))
 		le.PutUint16(out[at:], uint16(len(u)))
 		for i, c := range u {
@@ -261,6 +304,7 @@ func Encode(res []Resource, rva uint32) []byte {
 	return append(out, blobs.Bytes()...)
 }
 
+// countNamed is how many of ks are names, for a directory's NumberOfNamedEntries.
 func countNamed(ks []key) int {
 	n := 0
 	for _, k := range ks {
@@ -273,14 +317,19 @@ func countNamed(ks []key) int {
 
 // IconImage is one image of an .ico file.
 type IconImage struct {
-	Width, Height int // 1-256
-	Colors        uint8
-	Planes        uint16
-	BitCount      uint16
+	Width, Height int    // 1-256
+	Colors        uint8  // palette size; 0 for 256 or more colours
+	Planes        uint16 // colour planes, 0 or 1
+	BitCount      uint16 // bits per pixel (32 for the usual images with alpha)
 	Data          []byte // a BMP (BITMAPINFOHEADER onward) or a PNG
 }
 
 // ParseICO reads an .ico file.
+//
+// The format: a 6-byte ICONDIR (reserved 0, type 1 for icons, the image count), then a 16-byte
+// ICONDIRENTRY per image (width, height, colour count, reserved, planes, bit count, the data's size
+// and file offset). A width or height byte of 0 means 256. Counts above 64 are refused as damage.
+// The images' Data slices share b's memory.
 func ParseICO(b []byte) ([]IconImage, error) {
 	if len(b) < 6 || le.Uint16(b) != 0 || le.Uint16(b[2:]) != 1 {
 		return nil, errors.New("not an .ico file")
@@ -302,6 +351,7 @@ func ParseICO(b []byte) ([]IconImage, error) {
 	return out, nil
 }
 
+// dim is an icon entry's width or height byte as pixels: 0 stands for 256, which does not fit a byte.
 func dim(b byte) int {
 	if b == 0 {
 		return 256
@@ -310,6 +360,9 @@ func dim(b byte) int {
 }
 
 // EncodeICO writes an .ico file.
+//
+// It is ParseICO's inverse: the header, the entries, then the images in order, each entry holding its
+// image's offset. byte(256) is 0, which is how the format writes 256.
 func EncodeICO(images []IconImage) []byte {
 	var b bytes.Buffer
 	binary.Write(&b, le, [3]uint16{0, 1, uint16(len(images))})
@@ -327,6 +380,10 @@ func EncodeICO(images []IconImage) []byte {
 }
 
 // IconResources are an icon's images as RT_ICON 1..n and RT_GROUP_ICON group.
+//
+// Inside an exe an icon is split up: each image is its own RT_ICON resource, and the RT_GROUP_ICON
+// lists them. The group is an .ico header whose entries are 14 bytes (GRPICONDIRENTRY): the file
+// offset of an .ico entry is replaced by the u16 id of the image's RT_ICON. Everything is en-US.
 func IconResources(images []IconImage, group uint32) []Resource {
 	var out []Resource
 	var g bytes.Buffer
@@ -342,6 +399,10 @@ func IconResources(images []IconImage, group uint32) []Resource {
 }
 
 // ICOFromResources rebuilds an .ico file from a program's first icon group (the one Explorer shows).
+//
+// "First" is in directory order (less): a named group before numbered ones, then the lowest id.
+// Images are matched by RT_ICON id whatever their language; an entry whose image is missing is left
+// out, and a group with none left is an error, as is a program with no group.
 func ICOFromResources(res []Resource) ([]byte, error) {
 	icons := map[key][]byte{}
 	var groups []Resource
@@ -382,4 +443,4 @@ func ICOFromResources(res []Resource) ([]byte, error) {
 	return EncodeICO(images), nil
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=ff7062303a953f17fcf1d7ae41919548007f873d97ce7cee9292cbc991800e69 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=e522ca0229363bce1f30efd5a4c93a7ab9b9528deb645d21e53b191c260d1ba0 ====
