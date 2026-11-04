@@ -10,103 +10,16 @@
 package install
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
-	"encoding/json"
 	"errors"
-	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"reflect"
 	"sort"
 	"strings"
 	"testing"
-	"time"
 
 	"generic-company/wizard/internal/spec"
 )
-
-var today = time.Date(2026, 10, 17, 0, 0, 0, 0, time.UTC)
-
-func hash(b []byte) string {
-	s := sha256.Sum256(b)
-	return hex.EncodeToString(s[:])
-}
-
-// memSource is a payload in memory, checked the way payload.File checks.
-type memSource map[string][]byte
-
-func (m memSource) CopyChecked(name string, w io.Writer, size int64, want string) error {
-	b, ok := m[strings.TrimPrefix(name, "files/")]
-	if !ok {
-		return fmt.Errorf("%s missing", name)
-	}
-	if int64(len(b)) != size || hash(b) != want {
-		return fmt.Errorf("%s damaged", name)
-	}
-	_, err := w.Write(b)
-	return err
-}
-
-func manifest(version string, files memSource) *spec.Manifest {
-	m := &spec.Manifest{Format: 1, ID: "GenericCompany.Hello", Name: "Generic Company Hello", Version: version, Publisher: "Generic Company Inc. (fictional)",
-		Group: "Generic Company Inc", Run: spec.Run{Program: "hello.exe", Args: []string{"--db", `{localappdata}\Generic Company Inc\generic_company.db`}},
-		AskFolder: true, Shortcuts: spec.Shortcuts{Ask: true, StartMenu: true},
-		Purge: []string{`{localappdata}\Generic Company Inc\GenericCompany.Hello`}, Maker: "Generic Company Wizard Maker test"}
-	var names []string
-	for n := range files {
-		names = append(names, n)
-	}
-	sort.Strings(names)
-	for _, n := range names {
-		m.Files = append(m.Files, spec.File{Path: n, Size: int64(len(files[n])), SHA256: hash(files[n])})
-	}
-	return m
-}
-
-// memRegistry is the Uninstall key in memory.
-type memRegistry struct {
-	keys map[string][]Value
-	fail bool
-}
-
-func (r *memRegistry) Read(id string) ([]Value, bool, error) {
-	v, ok := r.keys[id]
-	return append([]Value(nil), v...), ok, nil
-}
-
-func (r *memRegistry) Write(id string, vals []Value) error {
-	if r.fail {
-		return errors.New("registry is read-only")
-	}
-	r.keys[id] = append([]Value(nil), vals...)
-	return nil
-}
-
-func (r *memRegistry) Delete(id string) error {
-	delete(r.keys, id)
-	return nil
-}
-
-func (r *memRegistry) dump() string {
-	b, _ := json.Marshal(r.keys)
-	return string(b)
-}
-
-type sandbox struct {
-	pl  Places
-	reg *memRegistry
-}
-
-func newSandbox(t *testing.T) *sandbox {
-	return &sandbox{pl: SandboxPlaces(t.TempDir()), reg: &memRegistry{keys: map[string][]Value{}}}
-}
-
-func (s *sandbox) dir() string { return s.pl.Dir("Generic Company Inc", "Generic Company Hello") }
-
-var v1 = memSource{"hello.exe": []byte("MZ hello 1"), "README.md": []byte("read me"), "data/old.json": []byte("{}"),
-	"data/settings.json": []byte(`{"v":1}`)}
 
 func TestPlanNewInstall(t *testing.T) {
 	s := newSandbox(t)
@@ -243,4 +156,4 @@ func TestQuoteArg(t *testing.T) {
 	}
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=337ae5cb4f0e15c6fe76e5e86fd8a46d0b1bf500b9890cc672ed9b065b11629a ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=1f0dac9044d9f2f4e769645d9182122e9e01227adc801a15fd3eda960309374f ====

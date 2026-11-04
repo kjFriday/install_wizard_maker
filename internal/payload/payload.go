@@ -237,7 +237,7 @@ func Layout(r io.ReaderAt, size int64) (end, tail int64, err error) {
 		}
 	}
 	tail = size
-	if sig := dirs[4]; sig.VirtualAddress != 0 && int64(sig.VirtualAddress) >= end &&
+	if sig := dirs[pe.IMAGE_DIRECTORY_ENTRY_SECURITY]; sig.VirtualAddress != 0 && int64(sig.VirtualAddress) >= end &&
 		int64(sig.VirtualAddress)+int64(sig.Size) == size {
 		tail = int64(sig.VirtualAddress) // for this directory the "address" is a file offset
 	}
@@ -303,4 +303,4 @@ func (p *File) StubBytes() ([]byte, error) {
 	return b, err
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=d7ef091b810eb853312af749544f447699c920d06b57c5315f360fcd73cc1e59 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=23d34fe45696c8c84293c6a612a73006f5a01191443c8f8765298621e02d8ded ====

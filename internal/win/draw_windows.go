@@ -62,7 +62,7 @@ func (p *Painter) Pixels(img image.Image, x, y, size int) {
 	procSetDIBits.Call(p.dc, bmp, 0, uintptr(n), uintptr(unsafe.Pointer(&bgra[0])), uintptr(unsafe.Pointer(&bmi)), 0)
 	old, _, _ := procSelectObject.Call(mem, bmp)
 	procAlphaBlend.Call(p.dc, uintptr(p.w.Scale(x)), uintptr(p.w.Scale(y)), uintptr(n), uintptr(n),
-		mem, 0, 0, uintptr(n), uintptr(n), 0x01FF0000) // AC_SRC_OVER, constant alpha 255, AC_SRC_ALPHA
+		mem, 0, 0, uintptr(n), uintptr(n), blendSrcAlpha)
 	procSelectObject.Call(mem, old)
 }
 
@@ -146,7 +146,7 @@ func (w *Window) Capture() (*image.RGBA, error) {
 	for _, try := range []struct {
 		flags uintptr
 		w, h  int
-	}{{0, width, height}, {2, width, height}, {1, cw, ch}} { // -, PW_RENDERFULLCONTENT, PW_CLIENTONLY
+	}{{0, width, height}, {pwRenderFullContent, width, height}, {pwClientOnly, cw, ch}} {
 		var img *image.RGBA
 		if img, err = w.print(try.flags, try.w, try.h); err == nil {
 			return img, nil
@@ -227,31 +227,30 @@ func (c *Control) fits() bool {
 	old, _, _ := procSelectObject.Call(dc, w.fonts[c.Font])
 	defer procSelectObject.Call(dc, old)
 	width, height := int32(w.Scale(c.Rect.W)), int32(w.Scale(c.Rect.H))
-	const calc, wordBreak, singleLine, noPrefix = 0x400, 0x10, 0x20, 0x800
 	u, _ := syscall.UTF16FromString(text)
 	measure := func(flags uintptr, max int32) rect {
 		r := rect{0, 0, max, 0}
-		procDrawText.Call(dc, uintptr(unsafe.Pointer(&u[0])), ^uintptr(0), uintptr(unsafe.Pointer(&r)), calc|flags)
+		procDrawText.Call(dc, uintptr(unsafe.Pointer(&u[0])), ^uintptr(0), uintptr(unsafe.Pointer(&r)), dtCalcRect|flags)
 		return r
 	}
 	if c.Class == "STATIC" {
-		flags := uintptr(wordBreak)
+		flags := uintptr(dtWordBreak)
 		if c.style&ssNoPrefix != 0 {
-			flags |= noPrefix
+			flags |= dtNoPrefix
 		}
-		if c.style&0xF == ssLeftNoWrap {
-			r := measure(singleLine, 0)
+		if c.style&typeMask == ssLeftNoWrap {
+			r := measure(dtSingleLine, 0)
 			return r.right <= width && r.bottom <= height
 		}
 		return measure(flags, width).bottom <= height
 	}
-	r := measure(singleLine, 0)
+	r := measure(dtSingleLine, 0)
 	pad := w.Scale(10)
-	if c.style&0xF == bsAutoCheckBox {
-		box, _, _ := procGetSystemMetricsForDpi.Call(71, uintptr(w.dpi)) // SM_CXMENUCHECK
+	if c.style&typeMask == bsAutoCheckBox {
+		box, _, _ := procGetSystemMetricsForDpi.Call(smCxMenuCheck, uintptr(w.dpi))
 		pad = int32(box) + w.Scale(6)
 	}
 	return r.right+pad <= width && r.bottom <= height
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=de0dea328b0d4c44b2c5a811d7e10cd73b627839bb0ba8824cb35d10805d6ceb ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=8211559920076995d76a6d5509133bd1d69275ee477cc545f07de8c091ee1109 ====

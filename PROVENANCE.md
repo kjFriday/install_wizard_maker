@@ -11,13 +11,14 @@ project, file and commit. Everything else is new.
 
 ## Files
 
-### `internal/install/plan.go`, `uninstall.go`
+### `internal/install/plan.go`, `places.go`, `uninstall.go`
 
 From `content_management_system/internal/install/install.go` (commit `d38f121`, "Add self-installer";
 the same file is in `notification_and_message_hub`):
 
 - The folder layout and the `-root` sandbox (`Locations` → `SandboxPlaces`, `Places.Dir`,
-  `StartMenuLink`, `DesktopLink`): the same paths, so both installers meet in the same places.
+  `StartMenuLink`, `DesktopLink`, in `places.go`; they were in `plan.go` until 2026-11-03): the same
+  paths, so both installers meet in the same places.
 - The marker's fields (`marker` → `Marker`: `app_id`, `name`, `version`, `files`, `shortcuts`), kept
   so either installer reads the other's; `sha256`, `purge` and `installer` are new.
 - The Apps & features values (`MakePlan`'s `Registry` list), with `UninstallString` now always quoted

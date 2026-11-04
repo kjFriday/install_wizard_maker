@@ -24,13 +24,15 @@ const (
 	LocalMachine = 0x80000002
 )
 
+// Win32 registry access rights, error codes, options and limits.
 const (
-	keyRead      = 0x20019
-	keyWrite     = 0x20006
-	key64        = 0x0100 // KEY_WOW64_64KEY
-	errNotFound  = syscall.Errno(2)
-	errNoMore    = syscall.Errno(259)
-	optionNormal = 0
+	keyRead      = 0x20019            // KEY_READ
+	keyWrite     = 0x20006            // KEY_WRITE
+	key64        = 0x0100             // KEY_WOW64_64KEY
+	errNotFound  = syscall.Errno(2)   // ERROR_FILE_NOT_FOUND
+	errNoMore    = syscall.Errno(259) // ERROR_NO_MORE_ITEMS
+	optionNormal = 0                  // REG_OPTION_NON_VOLATILE
+	keyNameMax   = 256                // a key name is at most 255 characters, plus its NUL
 )
 
 var (
@@ -89,6 +91,9 @@ func (k HKCU) Read(id string) ([]install.Value, bool, error) {
 	}
 	defer closeKey(h)
 	var count, nameMax, dataMax uint32
+	// RegQueryInfoKeyW(key, class, classLen, reserved, subKeys, maxSubKeyLen, maxClassLen, values,
+	// maxValueNameLen, maxValueLen, securityDescriptorLen, lastWriteTime): only the value count and
+	// the longest name and data are asked for; the zeros are NULL pointers
 	r, _, _ := procQueryInfoKey.Call(h, 0, 0, 0, 0, 0, 0, uintptr(unsafe.Pointer(&count)),
 		uintptr(unsafe.Pointer(&nameMax)), uintptr(unsafe.Pointer(&dataMax)), 0, 0)
 	if err := status(r); err != nil {
@@ -96,8 +101,8 @@ func (k HKCU) Read(id string) ([]install.Value, bool, error) {
 	}
 	var out []install.Value
 	for i := uint32(0); i < count; i++ {
-		name := make([]uint16, nameMax+1)
-		data := make([]byte, dataMax+2)
+		name := make([]uint16, nameMax+1) // the longest name, plus its NUL
+		data := make([]byte, dataMax+2)   // the longest data, plus room for a UTF-16 NUL
 		nameLen, dataLen := uint32(len(name)), uint32(len(data))
 		var typ uint32
 		var dp uintptr
@@ -213,7 +218,7 @@ func Subkeys(root uintptr, path string) ([]string, error) {
 	defer closeKey(h)
 	var out []string
 	for i := 0; ; i++ {
-		name := make([]uint16, 256)
+		name := make([]uint16, keyNameMax)
 		n := uint32(len(name))
 		r, _, _ := procEnumKey.Call(h, uintptr(i), uintptr(unsafe.Pointer(&name[0])), uintptr(unsafe.Pointer(&n)), 0, 0, 0, 0)
 		if err := status(r); errors.Is(err, errNoMore) {
@@ -255,4 +260,4 @@ func utf16Text(b []byte) string {
 	return syscall.UTF16ToString(u)
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=94ee13e201232039c4efff15679e67fe18718cf4ff96ee8c3a044e1fef45d8aa ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=5b2c601e6c599869682e8e7e391f60e7fd3bf4a10df4cab15d63a233c29f8674 ====

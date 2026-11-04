@@ -26,6 +26,14 @@ var (
 	procGetDiskFreeSpaceEx = kernel32.NewProc("GetDiskFreeSpaceExW")
 )
 
+// GetTokenInformation and MessageBox values.
+const (
+	tokenElevation = 20
+	mbYesNo        = 0x04
+	mbIconQuestion = 0x20
+	idYes          = 6
+)
+
 // Elevated reports whether this process runs as administrator. Setup refuses then: an elevated
 // process may belong to another account, and would install into that account's profile.
 func Elevated() bool {
@@ -35,7 +43,7 @@ func Elevated() bool {
 	}
 	defer t.Close()
 	var elevation, n uint32
-	err = syscall.GetTokenInformation(t, 20, (*byte)(unsafe.Pointer(&elevation)), 4, &n) // TokenElevation
+	err = syscall.GetTokenInformation(t, tokenElevation, (*byte)(unsafe.Pointer(&elevation)), 4, &n)
 	return err == nil && elevation != 0
 }
 
@@ -81,8 +89,8 @@ func FreeSpace(path string) (uint64, error) {
 func Ask(title, text string) bool {
 	t, _ := syscall.UTF16PtrFromString(title)
 	m, _ := syscall.UTF16PtrFromString(text)
-	r, _, _ := procMessageBox.Call(0, uintptr(unsafe.Pointer(m)), uintptr(unsafe.Pointer(t)), 0x04|0x20) // MB_YESNO | MB_ICONQUESTION
-	return r == 6                                                                                        // IDYES
+	r, _, _ := procMessageBox.Call(0, uintptr(unsafe.Pointer(m)), uintptr(unsafe.Pointer(t)), mbYesNo|mbIconQuestion)
+	return r == idYes
 }
 
 // Output is where a role's text goes: the console or pipe there is, else one message box at the end
@@ -143,4 +151,4 @@ func (o *Output) SetTitle(title string) { o.title = title }
 // Console reports whether text goes to a console or pipe (so no message box is needed).
 func (o *Output) Console() bool { return o.w != nil }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=663ce2e72e66b59d4fba4127ccaaf1e381f9027282c773c1037f2d156dee3b56 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=5c86686228afcb533a58920c214bb0ef5343374d9b9631d7e943ea54f16c6617 ====

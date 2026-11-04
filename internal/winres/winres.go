@@ -41,6 +41,20 @@ type Resource struct {
 
 var le = binary.LittleEndian
 
+// The resource section's layout, after Microsoft's "PE Format": a tree of directories three levels
+// deep (type, name, language), whose last level points at data entries.
+const (
+	resDirSize       = 16 // IMAGE_RESOURCE_DIRECTORY; its entries follow it
+	resDirNamed      = 12 // NumberOfNamedEntries
+	resDirIDs        = 14 // NumberOfIdEntries
+	resEntrySize     = 8  // IMAGE_RESOURCE_DIRECTORY_ENTRY: a name or id, then what it points at
+	resDataEntrySize = 16 // IMAGE_RESOURCE_DATA_ENTRY: the data's address and size, code page, reserved
+	resLangLevel     = 2  // the language level, the last one: its entries point at data entries
+
+	resNameIsString    = 0x80000000 // IMAGE_RESOURCE_NAME_IS_STRING: the rest is the offset of a name
+	resDataIsDirectory = 0x80000000 // IMAGE_RESOURCE_DATA_IS_DIRECTORY: the rest is the offset of a directory
+)
+
 // Decode reads a resource section's tree. rva is the section's address: data entries point by address.
 func Decode(sec []byte, rva uint32) ([]Resource, error) {
 	var out []Resource
@@ -50,19 +64,19 @@ func Decode(sec []byte, rva uint32) ([]Resource, error) {
 	}
 	var walk func(off uint32, depth int, path []level) error
 	walk = func(off uint32, depth int, path []level) error {
-		if depth > 2 || int(off)+16 > len(sec) {
+		if depth > resLangLevel || int(off)+resDirSize > len(sec) {
 			return errors.New("resource directory out of range")
 		}
-		n := int(le.Uint16(sec[off+12:])) + int(le.Uint16(sec[off+14:]))
+		n := int(le.Uint16(sec[off+resDirNamed:])) + int(le.Uint16(sec[off+resDirIDs:]))
 		for i := 0; i < n; i++ {
-			e := int(off) + 16 + 8*i
-			if e+8 > len(sec) {
+			e := int(off) + resDirSize + resEntrySize*i
+			if e+resEntrySize > len(sec) {
 				return errors.New("resource entry out of range")
 			}
 			nameField, target := le.Uint32(sec[e:]), le.Uint32(sec[e+4:])
 			var lv level
-			if nameField&0x80000000 != 0 {
-				s, err := dirString(sec, nameField&^0x80000000)
+			if nameField&resNameIsString != 0 {
+				s, err := dirString(sec, nameField&^resNameIsString)
 				if err != nil {
 					return err
 				}
@@ -71,13 +85,13 @@ func Decode(sec []byte, rva uint32) ([]Resource, error) {
 				lv.num = nameField
 			}
 			p := append(append([]level{}, path...), lv)
-			if target&0x80000000 != 0 {
-				if err := walk(target&^0x80000000, depth+1, p); err != nil {
+			if target&resDataIsDirectory != 0 {
+				if err := walk(target&^resDataIsDirectory, depth+1, p); err != nil {
 					return err
 				}
 				continue
 			}
-			if depth != 2 || int(target)+16 > len(sec) {
+			if depth != resLangLevel || int(target)+resDataEntrySize > len(sec) {
 				return errors.New("resource data entry out of place")
 			}
 			addr, size := le.Uint32(sec[target:]), le.Uint32(sec[target+4:])
@@ -155,16 +169,16 @@ func Encode(res []Resource, rva uint32) []byte {
 	sort.Slice(types, func(i, j int) bool { return less(types[i], types[j]) })
 
 	// sizes, to place every part before writing
-	dirSize := 16 + 8*len(types)
+	dirSize := resDirSize + resEntrySize*len(types)
 	var names []string
 	nData := 0
 	for _, tk := range types {
-		dirSize += 16 + 8*len(t[tk])
+		dirSize += resDirSize + resEntrySize*len(t[tk])
 		if tk.name != "" {
 			names = append(names, tk.name)
 		}
 		for _, nk := range sorted(t[tk]) {
-			dirSize += 16 + 8*len(t[tk][nk])
+			dirSize += resDirSize + resEntrySize*len(t[tk][nk])
 			nData += len(t[tk][nk])
 			if nk.name != "" {
 				names = append(names, nk.name)
@@ -172,42 +186,44 @@ func Encode(res []Resource, rva uint32) []byte {
 		}
 	}
 	dataEntries := dirSize
-	strOff := dataEntries + 16*nData
+	strOff := dataEntries + resDataEntrySize*nData
 	strPos := map[string]int{}
 	pos := strOff
 	for _, n := range names {
 		if _, ok := strPos[n]; !ok {
 			strPos[n] = pos
-			pos += 2 + 2*len(utf16.Encode([]rune(n)))
+			pos += 2 + 2*len(utf16.Encode([]rune(n))) // a u16 length, then the UTF-16 units
 		}
 	}
 	blob := (pos + 7) &^ 7
 
+	// write the tree: typeEntry, nameEntry and langEntry are where the next entry goes in the type
+	// directory, the current name directory and the current language directory
 	out := make([]byte, blob)
 	dirPos, entryPos := 0, dataEntries
 	var blobs bytes.Buffer
 	writeDir := func(at int, ks []key) int { // returns where the entries start
-		le.PutUint16(out[at+12:], uint16(countNamed(ks)))
-		le.PutUint16(out[at+14:], uint16(len(ks)-countNamed(ks)))
-		return at + 16
+		le.PutUint16(out[at+resDirNamed:], uint16(countNamed(ks)))
+		le.PutUint16(out[at+resDirIDs:], uint16(len(ks)-countNamed(ks)))
+		return at + resDirSize
 	}
 	nameField := func(k key) uint32 {
 		if k.name != "" {
-			return 0x80000000 | uint32(strPos[k.name])
+			return resNameIsString | uint32(strPos[k.name])
 		}
 		return k.num
 	}
 	root := dirPos
-	dirPos += 16 + 8*len(types)
-	e := writeDir(root, types)
+	dirPos += resDirSize + resEntrySize*len(types)
+	typeEntry := writeDir(root, types)
 	for _, tk := range types {
 		ids := sorted(t[tk])
 		sub := dirPos
-		dirPos += 16 + 8*len(ids)
-		le.PutUint32(out[e:], nameField(tk))
-		le.PutUint32(out[e+4:], 0x80000000|uint32(sub))
-		e += 8
-		ie := writeDir(sub, ids)
+		dirPos += resDirSize + resEntrySize*len(ids)
+		le.PutUint32(out[typeEntry:], nameField(tk))
+		le.PutUint32(out[typeEntry+4:], resDataIsDirectory|uint32(sub))
+		typeEntry += resEntrySize
+		nameEntry := writeDir(sub, ids)
 		for _, nk := range ids {
 			langs := make([]key, 0, len(t[tk][nk]))
 			for l := range t[tk][nk] {
@@ -215,19 +231,19 @@ func Encode(res []Resource, rva uint32) []byte {
 			}
 			sort.Slice(langs, func(i, j int) bool { return langs[i].num < langs[j].num })
 			lsub := dirPos
-			dirPos += 16 + 8*len(langs)
-			le.PutUint32(out[ie:], nameField(nk))
-			le.PutUint32(out[ie+4:], 0x80000000|uint32(lsub))
-			ie += 8
-			le2 := writeDir(lsub, langs)
+			dirPos += resDirSize + resEntrySize*len(langs)
+			le.PutUint32(out[nameEntry:], nameField(nk))
+			le.PutUint32(out[nameEntry+4:], resDataIsDirectory|uint32(lsub))
+			nameEntry += resEntrySize
+			langEntry := writeDir(lsub, langs)
 			for _, l := range langs {
 				data := t[tk][nk][l.num]
-				le.PutUint32(out[le2:], l.num)
-				le.PutUint32(out[le2+4:], uint32(entryPos))
-				le2 += 8
+				le.PutUint32(out[langEntry:], l.num)
+				le.PutUint32(out[langEntry+4:], uint32(entryPos))
+				langEntry += resEntrySize
 				le.PutUint32(out[entryPos:], rva+uint32(blob+blobs.Len()))
 				le.PutUint32(out[entryPos+4:], uint32(len(data)))
-				entryPos += 16
+				entryPos += resDataEntrySize
 				blobs.Write(data)
 				for blobs.Len()%8 != 0 {
 					blobs.WriteByte(0)
@@ -366,4 +382,4 @@ func ICOFromResources(res []Resource) ([]byte, error) {
 	return EncodeICO(images), nil
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=5baff36d3e289806de7319435659ca33ec1b53188388fc92bbef2b5ad8d31672 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=ff7062303a953f17fcf1d7ae41919548007f873d97ce7cee9292cbc991800e69 ====

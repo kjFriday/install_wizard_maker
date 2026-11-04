@@ -188,6 +188,46 @@ func (s *Setup) Install(progress func(done, total int64, file string), cancelled
 		Source: s.P, Icon: s.Icon, Uninstaller: uninstaller, Progress: progress, Cancelled: cancelled})
 }
 
+// LaunchTarget is what Launch on the finish page starts: the new Start-menu (or desktop) shortcut, so
+// the program gets its own taskbar identity and working folder, else the program itself.
+func (s *Setup) LaunchTarget() (file, args, dir string) {
+	if s.Choices.StartMenu {
+		return s.Places.StartMenuLink(s.M.Group, s.M.Name), "", ""
+	}
+	if s.Choices.Desktop {
+		return s.Places.DesktopLink(s.M.Name), "", ""
+	}
+	program := filepath.Join(s.Choices.Dir, filepath.FromSlash(s.M.Run.Program))
+	if s.M.Run.Program == spec.Python {
+		program = s.Python
+	}
+	vars := spec.ArgVars(s.Choices.Dir, s.M.Name, s.M.Version, s.Places.LocalAppData, s.Places.AppData)
+	var quoted []string
+	for _, a := range s.M.Run.Args {
+		x, _ := spec.Expand(a, vars)
+		quoted = append(quoted, quoteForShell(x))
+	}
+	return program, strings.Join(quoted, " "), s.Choices.Dir
+}
+
+func quoteForShell(s string) string {
+	if s == "" || strings.ContainsAny(s, " \t\"") {
+		return `"` + strings.ReplaceAll(s, `"`, `\"`) + `"`
+	}
+	return s
+}
+
+// human is a size for people.
+func human(n int64) string {
+	switch {
+	case n < 1024*1024:
+		return fmt.Sprintf("%d KB", (n+1023)/1024)
+	case n < 1024*1024*1024:
+		return fmt.Sprintf("%.1f MB", float64(n)/(1024*1024))
+	}
+	return fmt.Sprintf("%.1f GB", float64(n)/(1024*1024*1024))
+}
+
 // uninstallInfo is uninstall.json, the payload of an uninstall.exe: which program it may remove.
 type uninstallInfo struct {
 	ID      string `json:"id"`
@@ -217,6 +257,10 @@ func exitCode(err error) int {
 	return app.ExitFailed
 }
 
+// lockName is the session mutex that keeps a program's setup and its uninstaller from running at the
+// same time. Setups and uninstallers made by every version of the maker must agree on it: never change it.
+func lockName(id string) string { return "GenericCompany.Wizard." + id }
+
 // RunSetup is a setup.exe's main.
 func RunSetup(self string, p *payload.File, args []string) int {
 	o, err := parseSetup(args)
@@ -243,7 +287,7 @@ func RunSetup(self string, p *payload.File, args []string) int {
 		out.Done(sys.Info)
 		return app.ExitOK
 	}
-	release, ok := sys.Lock("GenericCompany.Wizard." + s.M.ID)
+	release, ok := sys.Lock(lockName(s.M.ID))
 	if !ok {
 		out.Printf("Setup or uninstall of %s is already running.", s.M.Name)
 		out.Done(sys.Warning)
@@ -281,4 +325,4 @@ func quietSetup(s *Setup, out *sys.Output) int {
 	return app.ExitOK
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=9f887d47e951ced791f41e02dec38487905b6b351a84bcee11a90f152f33c13f ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=c621fdc00ab66e59a4db03bdfe4edf469fbe26d8b3ff9ea9a28861c871260504 ====

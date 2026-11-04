@@ -131,7 +131,7 @@ func RunUninstall(self string, p *payload.File, args []string) int {
 		out.Done(sys.Info)
 		return app.ExitOK
 	}
-	release, ok := sys.Lock("GenericCompany.Wizard." + u.Info.ID)
+	release, ok := sys.Lock(lockName(u.Info.ID))
 	if !ok {
 		out.Printf("Setup or uninstall of %s is already running.", u.Info.Name)
 		out.Done(sys.Warning)
@@ -157,4 +157,4 @@ func RunUninstall(self string, p *payload.File, args []string) int {
 	return app.ExitOK
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=e9c7ca959d6e47249cb0c2474d7ce39207a57c62f3fa218289485276cb240cf5 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=6c4b304f4b45db3cb94cb110759fb967147c4af18464c020f42efb7930b99489 ====

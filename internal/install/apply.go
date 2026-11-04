@@ -382,9 +382,16 @@ func (t *tx) rename(from, to string) error {
 	}
 }
 
+// The Windows errors a rename gets while another program briefly holds the file.
+const (
+	errAccessDenied     = syscall.Errno(5)  // ERROR_ACCESS_DENIED
+	errSharingViolation = syscall.Errno(32) // ERROR_SHARING_VIOLATION
+	errLockViolation    = syscall.Errno(33) // ERROR_LOCK_VIOLATION
+)
+
 func retryable(err error) bool {
 	var errno syscall.Errno
-	return errors.As(err, &errno) && (errno == 5 || errno == 32 || errno == 33) // access denied, sharing, lock
+	return errors.As(err, &errno) && (errno == errAccessDenied || errno == errSharingViolation || errno == errLockViolation)
 }
 
 // mkdirs makes a folder and its parents, remembering which it made so a rollback removes them.
@@ -454,4 +461,4 @@ func hide(path string) {
 	}
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=b761bed408ac684100df0c27d3e8504b900d5f3eb9daa175bcceb4790eb2373d ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=e515b73edf12f37fadc269098c953473834a6f1f4c430fb81bf1f8291f8e3fc3 ====

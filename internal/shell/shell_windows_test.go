@@ -1,5 +1,5 @@
 // ==== Generic Company Inc. portfolio ====================================
-// Project: wizard_maker | File: internal/shell/shell_test.go
+// Project: wizard_maker | File: internal/shell/shell_windows_test.go
 // About: Tests for package shell.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
@@ -70,4 +70,4 @@ func TestShortcutRoundTrip(t *testing.T) {
 	}
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=d1199505c7cadf279217c1619a02d5ab5d3e0ae8f1cd5194e4553bacd5e3bd97 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=f18c5c65df1bab397fafc9f50d4d83c1681e800dd360d2a383ba0a64c2493f51 ====

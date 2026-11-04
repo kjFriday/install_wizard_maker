@@ -246,4 +246,27 @@ func TestManifestCheck(t *testing.T) {
 	}
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=bc1e4b42737bd96c82435f978ffec3bf6ac10df8391f1a67ed9593384e52fdca ====
+// SetDir moves the folder the spec's relative paths start from (rule 11).
+func TestSetDir(t *testing.T) {
+	s := valid(t)
+	moved := t.TempDir()
+	writeTree(t, moved, map[string]string{"app/hello.exe": "MZ", "extra/notes.txt": "notes"})
+	s.SetDir(moved)
+	if s.Dir() != moved || s.Abs("app") != filepath.Join(moved, "app") || s.Abs(`C:\elsewhere`) != `C:\elsewhere` {
+		t.Fatalf("dir %s, app at %s", s.Dir(), s.Abs("app"))
+	}
+	src, err := s.Sources()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got []string
+	for _, f := range src {
+		got = append(got, f.Path+" "+f.Abs)
+	}
+	want := []string{"docs/notes.txt " + filepath.Join(moved, "extra", "notes.txt"), "hello.exe " + filepath.Join(moved, "app", "hello.exe")}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("sources %v, want %v", got, want)
+	}
+}
+
+// ==== stamp v1 | author=kjFriday | hmac-sha256=8d48d758e685c3ec96bd6868822f798337510962b9cddeb1f36a52527c186e4a ====

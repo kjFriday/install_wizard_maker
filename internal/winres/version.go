@@ -24,6 +24,23 @@ type VersionInfo struct {
 	Strings [][2]string // key, value; in this order (CompanyName, FileDescription, ...)
 }
 
+// VS_VERSIONINFO values: the VS_FIXEDFILEINFO fields this package writes or reads, and the header every
+// block starts with.
+const (
+	fixedSignature     = 0xFEEF04BD // dwSignature
+	fixedStrucVersion  = 0x00010000 // dwStrucVersion: 1.0
+	fixedFileVersionMS = 8          // dwFileVersionMS
+	fixedFileVersionLS = 12         // dwFileVersionLS
+	fixedFileInfoSize  = 52         // sizeof(VS_FIXEDFILEINFO)
+	fileFlagsMask      = 0x3F       // VS_FFI_FILEFLAGSMASK
+	osNTWindows32      = 0x00040004 // VOS_NT_WINDOWS32
+	fileTypeApp        = 1          // VFT_APP
+
+	nodeHeaderSize = 6 // wLength, wValueLength, wType
+	valueBinary    = 0 // wType of a block whose value is bytes
+	valueText      = 1 // wType of a block whose value is text
+)
+
 // ParseVersion turns "1.2.3" into {1, 2, 3, 0}.
 func ParseVersion(s string) [4]uint16 {
 	var v [4]uint16
@@ -44,11 +61,11 @@ func (v VersionInfo) Bytes() []byte {
 	ms := func(a, b uint16) uint32 { return uint32(a)<<16 | uint32(b) }
 	fixed := new(bytes.Buffer)
 	binary.Write(fixed, le, []uint32{
-		0xFEEF04BD, 0x00010000, // signature, structure version
+		fixedSignature, fixedStrucVersion,
 		ms(v.Version[0], v.Version[1]), ms(v.Version[2], v.Version[3]), // file version
 		ms(v.Version[0], v.Version[1]), ms(v.Version[2], v.Version[3]), // product version
-		0x3F, 0, // flags mask, flags
-		0x00040004, 1, 0, // VOS_NT_WINDOWS32, VFT_APP, no subtype
+		fileFlagsMask, 0, // flags
+		osNTWindows32, fileTypeApp, 0, // no subtype
 		0, 0, // date
 	})
 	var strs [][]byte
@@ -57,7 +74,7 @@ func (v VersionInfo) Bytes() []byte {
 		strs = append(strs, node(kv[0], val, uint16(len(val)/2), true))
 	}
 	table := node("040904B0", nil, 0, true, strs...)
-	translation := []byte{0x09, 0x04, 0xB0, 0x04}
+	translation := []byte{0x09, 0x04, 0xB0, 0x04} // LangEnUS, then code page 1200 (Unicode): two u16, little-endian
 	vars := node("VarFileInfo", nil, 0, true, node("Translation", translation, 4, false))
 	return node("VS_VERSION_INFO", fixed.Bytes(), uint16(fixed.Len()), false,
 		node("StringFileInfo", nil, 0, true, table), vars)
@@ -67,9 +84,9 @@ func (v VersionInfo) Bytes() []byte {
 // wLength counts everything but trailing padding.
 func node(key string, value []byte, valueLen uint16, text bool, children ...[]byte) []byte {
 	var b bytes.Buffer
-	kind := uint16(0)
+	kind := uint16(valueBinary)
 	if text {
-		kind = 1
+		kind = valueText
 	}
 	binary.Write(&b, le, [3]uint16{0, valueLen, kind})
 	b.Write(utf16z(key))
@@ -104,10 +121,10 @@ func ReadVersionInfo(b []byte) ([4]uint16, map[string]string, error) {
 	var v [4]uint16
 	strs := map[string]string{}
 	key, value, children, err := readNode(b)
-	if err != nil || key != "VS_VERSION_INFO" || len(value) < 52 || le.Uint32(value) != 0xFEEF04BD {
+	if err != nil || key != "VS_VERSION_INFO" || len(value) < fixedFileInfoSize || le.Uint32(value) != fixedSignature {
 		return v, nil, errors.New("not a VS_VERSIONINFO block")
 	}
-	ms, ls := le.Uint32(value[8:]), le.Uint32(value[12:])
+	ms, ls := le.Uint32(value[fixedFileVersionMS:]), le.Uint32(value[fixedFileVersionLS:])
 	v = [4]uint16{uint16(ms >> 16), uint16(ms), uint16(ls >> 16), uint16(ls)}
 	for _, c := range children {
 		k, _, tables, err := readNode(c)
@@ -136,22 +153,22 @@ func ReadVersionInfo(b []byte) ([4]uint16, map[string]string, error) {
 
 // readNode splits one block into its key, value and children.
 func readNode(b []byte) (key string, value []byte, children [][]byte, err error) {
-	if len(b) < 6 {
+	if len(b) < nodeHeaderSize {
 		return "", nil, nil, errors.New("version block too short")
 	}
 	n, valueLen, kind := int(le.Uint16(b)), int(le.Uint16(b[2:])), le.Uint16(b[4:])
-	if n > len(b) || n < 6 {
+	if n > len(b) || n < nodeHeaderSize {
 		return "", nil, nil, errors.New("version block length out of range")
 	}
 	b = b[:n]
-	i := 6
+	i := nodeHeaderSize
 	for i+1 < n && (b[i] != 0 || b[i+1] != 0) {
 		i += 2
 	}
-	key = fromUTF16(b[6:i])
+	key = fromUTF16(b[nodeHeaderSize:i])
 	i = align4(i + 2)
 	size := valueLen
-	if kind == 1 {
+	if kind == valueText {
 		size *= 2 // text values count characters
 	}
 	if i+size > n {
@@ -186,4 +203,4 @@ func fromUTF16(b []byte) string {
 	return string(utf16.Decode(u))
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=b672f6b519890f33ac2445184e37d5201959b0673f947c924a3b4be100626954 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=c54223437457de648c1326a912fba5b51d04996ab98aaf8adca46329b35efff3 ====

@@ -154,9 +154,15 @@ func TestSignatureAfterPayload(t *testing.T) {
 	cert := make([]byte, 16)
 	binary.LittleEndian.PutUint32(cert, 16)
 	signed := append(append([]byte{}, good...), cert...)
-	opt := int(binary.LittleEndian.Uint32(signed[0x3c:])) + 24
-	binary.LittleEndian.PutUint32(signed[opt+144:], uint32(len(good)))
-	binary.LittleEndian.PutUint32(signed[opt+148:], 16)
+	const (
+		lfanewAt   = 0x3c           // e_lfanew: where the "PE\0\0" signature starts
+		optAt      = 4 + 20         // the optional header follows the signature and the COFF file header
+		certAddrAt = 112 + 8*4      // DataDirectory[4] (security) of a PE32+ optional header: the table's offset,
+		certSizeAt = certAddrAt + 4 // then its size
+	)
+	opt := int(binary.LittleEndian.Uint32(signed[lfanewAt:])) + optAt
+	binary.LittleEndian.PutUint32(signed[opt+certAddrAt:], uint32(len(good)))
+	binary.LittleEndian.PutUint32(signed[opt+certSizeAt:], 16)
 	path := filepath.Join(t.TempDir(), "signed.exe")
 	os.WriteFile(path, signed, 0o644)
 	p, err := Open(path)
@@ -178,4 +184,29 @@ func TestRejectsEscapingNames(t *testing.T) {
 	}
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=288c7025f3539243d60a66cdcd69ec1e36a228345ab1f871f99ce1c91b6a49e9 ====
+// FromFile reads its file when the payload is written, not when the entry is made (rule 11).
+func TestFromFile(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "late.txt")
+	e := FromFile("files/late.txt", path) // the file is not there yet
+	if err := os.WriteFile(path, []byte("written after the entry"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	p, err := Open(write(t, "setup.exe", stub(t), Setup, []Entry{e}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer p.Close()
+	if b, err := p.ReadAll("files/late.txt", 100); err != nil || string(b) != "written after the entry" {
+		t.Fatalf("%q %v", b, err)
+	}
+	if err := os.Remove(path); err != nil {
+		t.Fatalf("the file is still open: %v", err)
+	}
+	var buf bytes.Buffer
+	if err := Write(&buf, stub(t), Setup, []Entry{FromFile("files/gone.txt", filepath.Join(dir, "gone.txt"))}); err == nil {
+		t.Fatal("a missing file was packed")
+	}
+}
+
+// ==== stamp v1 | author=kjFriday | hmac-sha256=e5a382063a34c53da9db403aeab3fd3886eec1ed83994f349fe394bc01bc9443 ====

@@ -1,5 +1,5 @@
 // ==== Generic Company Inc. portfolio ====================================
-// Project: wizard_maker | File: internal/win/win_test.go
+// Project: wizard_maker | File: internal/win/win_windows_test.go
 // About: Tests for package win.
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
@@ -99,4 +99,4 @@ func TestWindowRoundTrip(t *testing.T) {
 	}
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=7b47c894f77cf2042a5c8611067c56f606891ac1ca6b233416058607c072061f ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=37b64a8bef3a38dd1bdbc7d965e332d863ea1887daa338fbf7a71f8e4c570f12 ====

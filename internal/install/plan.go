@@ -39,55 +39,7 @@ const (
 	UninstallerName = "uninstall.exe"
 	IconName        = "app.ico"
 	setupDir        = ".setup"
-	uninstallKey    = `Software\Microsoft\Windows\CurrentVersion\Uninstall`
 )
-
-// Places are the folders an install touches.
-type Places struct {
-	Programs     string // per-user programs folder (%LOCALAPPDATA%\Programs)
-	StartMenu    string // the Start menu's Programs folder
-	Desktop      string
-	LocalAppData string // for purge entries
-	AppData      string
-	Root         string // the -root sandbox; "" on the real computer
-}
-
-// SandboxPlaces is the -root layout the other Generic Company programs use: everything under root, and the
-// registry in root\registry.json.
-func SandboxPlaces(root string) Places {
-	root, _ = filepath.Abs(root)
-	return Places{Programs: filepath.Join(root, "Programs"), StartMenu: filepath.Join(root, "Start Menu"),
-		Desktop: filepath.Join(root, "Desktop"), LocalAppData: filepath.Join(root, "LocalAppData"),
-		AppData: filepath.Join(root, "AppData"), Root: root}
-}
-
-// Dir is the default install folder: Programs\[group\]name.
-func (p Places) Dir(group, name string) string { return filepath.Join(p.Programs, group, name) }
-
-// StartMenuLink is the Start-menu shortcut: [group\]name.lnk.
-func (p Places) StartMenuLink(group, name string) string {
-	return filepath.Join(p.StartMenu, group, name+".lnk")
-}
-
-// DesktopLink is the desktop shortcut.
-func (p Places) DesktopLink(name string) string { return filepath.Join(p.Desktop, name+".lnk") }
-
-// ownsLink: shortcuts are only ever .lnk files in the Start menu or on the desktop.
-func (p Places) ownsLink(path string) bool {
-	if !strings.EqualFold(filepath.Ext(path), ".lnk") {
-		return false
-	}
-	return within(p.StartMenu, path) || within(p.Desktop, path)
-}
-
-// within reports whether path is strictly inside dir.
-func within(dir, path string) bool {
-	if dir == "" {
-		return false
-	}
-	rel, err := filepath.Rel(dir, path)
-	return err == nil && rel != "." && filepath.IsLocal(rel)
-}
 
 // Marker is install.json.
 type Marker struct {
@@ -362,4 +314,4 @@ func Existing(reg Registry, pl Places, id, group, name string) (dir string, m *M
 	return "", nil
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=1cb7ef8d1de5921d234cd2628c6c9d396169d8248f4496cacf95936b9adfd972 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=83fbe77838994260988c122abe49be55390647c340dbb72b142b034e64289b30 ====

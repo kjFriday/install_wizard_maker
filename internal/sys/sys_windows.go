@@ -27,10 +27,17 @@ var (
 	procMessageBox               = user32.NewProc("MessageBoxW")
 )
 
+// SetDefaultDllDirectories, AttachConsole and GetFileType values.
+const (
+	loadLibrarySearchSystem32 = 0x0800
+	attachParentProcess       = ^uintptr(0) // (DWORD)-1
+	fileTypeUnknown           = 0
+)
+
 // HardenDLLSearch makes Windows load DLLs from System32 only, so a DLL planted beside a downloaded
 // setup.exe is never loaded. Call it first, before anything loads a DLL.
 func HardenDLLSearch() {
-	procSetDefaultDllDirectories.Call(0x800) // LOAD_LIBRARY_SEARCH_SYSTEM32
+	procSetDefaultDllDirectories.Call(loadLibrarySearchSystem32)
 }
 
 // Stdout is where command-line output goes: the inherited standard output when there is one (a pipe, a
@@ -40,7 +47,7 @@ func Stdout() io.Writer {
 	if usable(syscall.Stdout) {
 		return os.Stdout
 	}
-	if r, _, _ := procAttachConsole.Call(^uintptr(0)); r != 0 { // ATTACH_PARENT_PROCESS
+	if r, _, _ := procAttachConsole.Call(attachParentProcess); r != 0 {
 		if f, err := os.OpenFile("CONOUT$", os.O_WRONLY, 0); err == nil {
 			return f
 		}
@@ -53,7 +60,7 @@ func usable(h syscall.Handle) bool {
 		return false
 	}
 	t, err := syscall.GetFileType(h)
-	return err == nil && t != 0 // FILE_TYPE_UNKNOWN
+	return err == nil && t != fileTypeUnknown
 }
 
 // Message box icons.
@@ -70,4 +77,4 @@ func MessageBox(title, text string, icon uint32) {
 	procMessageBox.Call(0, uintptr(unsafe.Pointer(m)), uintptr(unsafe.Pointer(t)), uintptr(icon))
 }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=59425c4a6dc5b8ebd3994e8aa6c88c17bd9df2f3d1fe99decee0c2f4653e1f0e ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=95cb97bc4df071c0b51c99fef7a5535fa6badff7886d74fea8d3f3ed864f7fef ====

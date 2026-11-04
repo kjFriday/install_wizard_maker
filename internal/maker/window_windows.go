@@ -1,17 +1,19 @@
 // ==== Generic Company Inc. portfolio ====================================
 // Project: wizard_maker | File: internal/maker/window_windows.go
-// About: Part of package maker in wizard_maker.
+// About: The maker's window: the menu and keyboard shortcuts, the layout of the setup.json fields...
 // Copyright (c) 2026 kjFriday | SPDX-License-Identifier: AGPL-3.0-only
 // You may change this file under the AGPL-3.0. The stamp at the end marks
 // the version kjFriday wrote. Verify with the portfolio's tools/stamp.py --check.
 // Reused code, if any, is mapped in PROVENANCE.md.
 // ========================================================================
 
+// The maker's window: the menu and keyboard shortcuts, the layout of the setup.json fields, loading and
+// saving, and the routing of every command. Building (with the -smoke walk) is in window_build_windows.go,
+// the Help menu in window_help_windows.go.
+
 package maker
 
 import (
-	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -87,10 +89,12 @@ type makerUI struct {
 	startMenu, desktop                  *win.Control
 	build, log                          *win.Control
 
+	// UI thread only: the log so far, whether a build runs, and the last setup.exe built.
 	logText   strings.Builder
 	building  bool
 	lastBuilt string
 
+	// Shared with the build worker, under mu: new log lines, and the result once done.
 	mu      sync.Mutex
 	pending []string
 	done    bool
@@ -114,7 +118,7 @@ func Window(self, file, smoke string) int {
 	ui := &makerUI{w: w, self: self}
 	ui.layout()
 	w.Accelerators([]win.Accel{{Key: 'N', Ctrl: true, ID: idNew}, {Key: 'O', Ctrl: true, ID: idOpen},
-		{Key: 'S', Ctrl: true, ID: idSave}, {Key: 0x74, ID: idBuild}}) // F5
+		{Key: 'S', Ctrl: true, ID: idSave}, {Key: win.VKF5, ID: idBuild}})
 	w.OnCommand = ui.command
 	w.OnClose = ui.closing
 	w.OnWake = ui.wake
@@ -371,7 +375,7 @@ func (ui *makerUI) mayDiscard() bool {
 	if ui.file != "" {
 		name = filepath.Base(ui.file)
 	}
-	switch ui.w.MessageBox(app.Name, "Save the changes to "+name+"?", 0x03|win.MBIconQuestion) { // MB_YESNOCANCEL
+	switch ui.w.MessageBox(app.Name, "Save the changes to "+name+"?", win.MBYesNoCancel|win.MBIconQuestion) {
 	case win.IDYES:
 		return ui.save(false)
 	case win.IDNO:
@@ -411,118 +415,4 @@ func (ui *makerUI) save(as bool) bool {
 	return true
 }
 
-// startBuild saves if needed (a build is always of setup.json as saved), then builds on a worker.
-func (ui *makerUI) startBuild() {
-	if ui.building {
-		return
-	}
-	if (ui.dirty || ui.file == "") && !ui.save(false) {
-		return
-	}
-	stub, err := os.ReadFile(ui.self)
-	if err != nil {
-		ui.w.MessageBox(app.Name, err.Error(), win.MBIconError)
-		return
-	}
-	ui.logText.Reset()
-	ui.log.SetText("")
-	ui.building = true
-	ui.build.Enable(false)
-	ui.mu.Lock()
-	ui.done, ui.pending = false, nil
-	ui.mu.Unlock()
-	s := ui.s
-	go func() {
-		res, err := Build(s, stub, func(format string, a ...any) {
-			ui.mu.Lock()
-			ui.pending = append(ui.pending, fmt.Sprintf(format, a...))
-			ui.mu.Unlock()
-			ui.w.Wake()
-		})
-		ui.mu.Lock()
-		ui.result, ui.err, ui.done = res, err, true
-		ui.mu.Unlock()
-		ui.w.Wake()
-	}()
-}
-
-func (ui *makerUI) wake() {
-	ui.mu.Lock()
-	lines, done, res, err := ui.pending, ui.done, ui.result, ui.err
-	ui.pending = nil
-	ui.mu.Unlock()
-	for _, l := range lines {
-		ui.logText.WriteString(l + "\n")
-	}
-	if done && ui.building {
-		ui.building = false
-		ui.build.Enable(true)
-		var se *SpecError
-		switch {
-		case errors.As(err, &se):
-			ui.logText.WriteString(filepath.Base(ui.file) + " has problems:\n  " + strings.ReplaceAll(err.Error(), "\n", "\n  ") + "\n")
-		case err != nil:
-			ui.logText.WriteString("Build failed: " + err.Error() + "\n")
-		default:
-			ui.lastBuilt = res.Path
-			ui.logText.WriteString(fmt.Sprintf("Done: %s in %s. Build > Run the last setup.exe tries it.\n", count(res.Files, "file"), filepath.Base(res.Path)))
-		}
-	}
-	ui.log.SetText(ui.logText.String())
-}
-
-// smoke shows the window with its setup.json, builds it, and records both.
-func (ui *makerUI) smoke(file string) int {
-	s := win.NewSmoke(ui.w, file, "maker", app.Title)
-	ui.w.Show()
-	s.Capture("form", nil)
-	ui.startBuild()
-	s.WaitFor(func() bool { return !ui.building }) // cleared on the UI thread once the result is shown
-	s.Capture("built", map[string]bool{"built": ui.lastBuilt != ""})
-	ui.w.Close()
-	code := app.ExitOK
-	if ui.lastBuilt == "" {
-		code = app.ExitFailed
-	}
-	if err := s.Write(code); err != nil {
-		return app.ExitFailed
-	}
-	return code
-}
-
-func about() string {
-	return app.Title + "\n\nMakes install wizards: one setup.exe per program, which installs it for the current user, " +
-		"lists it in Apps & features and leaves an uninstaller.\n\n" + app.Credit +
-		"\n\nCode: GNU AGPL-3.0. Generic Company Inc. is fictional."
-}
-
-// helpItems are the Help menu's entries.
-func helpItems() []win.MenuItem {
-	return []win.MenuItem{{ID: idInstallSelf, Text: "&Install for this user…"}, {ID: idUninstallSelf, Text: "&Uninstall…"}, {},
-		{ID: idAbout, Text: "&About"}}
-}
-
-// helpCommand handles the Help menu's install entries: each starts its own window. Uninstalling the
-// copy this window runs from closes the window (asking about unsaved changes first), so the uninstaller
-// can remove its exe.
-func (ui *makerUI) helpCommand(id int) {
-	var err error
-	switch id {
-	case idInstallSelf:
-		err = startSelfSetup(ui.self)
-	case idUninstallSelf:
-		var exe string
-		var inside bool
-		if exe, inside, err = selfUninstaller(ui.self, ""); err != nil || (inside && !ui.closing()) {
-			break
-		}
-		if err = startUninstaller(exe); err == nil && inside {
-			ui.w.Close()
-		}
-	}
-	if err != nil {
-		ui.w.MessageBox(app.Name, err.Error(), win.MBIconWarning)
-	}
-}
-
-// ==== stamp v1 | author=kjFriday | hmac-sha256=5b131c6f70cff4985176f0c9ce8083605e561a02dea7f044b51ee7eb47911663 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=26819da94302bd546b6485637c0587295f08b31633879c414e2e8d935ba1b51a ====

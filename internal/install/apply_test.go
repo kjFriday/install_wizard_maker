@@ -20,54 +20,7 @@ import (
 	"strings"
 	"syscall"
 	"testing"
-	"time"
 )
-
-// fakeLink writes a text file where the .lnk would go.
-func fakeLink(s Shortcut) error {
-	b, _ := json.Marshal(s)
-	return os.WriteFile(s.Path, b, 0o644)
-}
-
-func (s *sandbox) env(src memSource) Env {
-	return Env{Places: s.pl, Registry: s.reg, Link: fakeLink, Source: src, Icon: []byte("ICON"),
-		Uninstaller: []byte("MZ uninstaller"), Retry: time.Millisecond}
-}
-
-func (s *sandbox) install(t *testing.T, version string, src memSource, c Choices) Result {
-	t.Helper()
-	old, _ := ReadMarker(s.dir())
-	c.Dir = s.dir()
-	p, err := MakePlan(manifest(version, src), s.pl, c, old, today, 14)
-	if err != nil {
-		t.Fatal(err)
-	}
-	res, err := Apply(p, s.env(src))
-	if err != nil {
-		t.Fatal(err)
-	}
-	return res
-}
-
-// snapshot is every file under the sandbox with its hash, plus the registry.
-func (s *sandbox) snapshot(t *testing.T) string {
-	t.Helper()
-	var lines []string
-	filepath.WalkDir(s.pl.Root, func(p string, d fs.DirEntry, err error) error {
-		if err != nil {
-			t.Fatal(err)
-		}
-		rel, _ := filepath.Rel(s.pl.Root, p)
-		if d.IsDir() {
-			lines = append(lines, rel+"/")
-			return nil
-		}
-		b, _ := os.ReadFile(p)
-		lines = append(lines, rel+" "+hash(b))
-		return nil
-	})
-	return strings.Join(lines, "\n") + "\n" + s.reg.dump()
-}
 
 func TestApplyInstallsEverything(t *testing.T) {
 	s := newSandbox(t)
@@ -258,6 +211,4 @@ func TestApplyRefusals(t *testing.T) {
 	}
 }
 
-var v2 = memSource{"hello.exe": []byte("MZ hello 2"), "README.md": []byte("read me"), "data/new.json": []byte("[]")}
-
-// ==== stamp v1 | author=kjFriday | hmac-sha256=9dbdec08d397172fa220bf121ae343a9d2b8c61aae900431a1f1cf9fa015c9bf ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=33564a4c5fbd3b37615dabd2069a45e76cbf651a7f021a786860cd35e7adab7c ====

@@ -11,9 +11,9 @@ package install
 
 // Registry value types setup writes (anything else is kept as raw bytes when read).
 const (
-	RegSZ       = 1
-	RegExpandSZ = 2
-	RegDWORD    = 4
+	RegSZ       = 1 // REG_SZ
+	RegExpandSZ = 2 // REG_EXPAND_SZ
+	RegDWORD    = 4 // REG_DWORD
 )
 
 // Value is one registry value.
@@ -49,7 +49,11 @@ type Registry interface {
 	Delete(id string) error              // no error when it is not there
 }
 
+// uninstallKey is the per-user Uninstall key, under HKEY_CURRENT_USER; each program's entry is
+// a subkey named by its app id.
+const uninstallKey = `Software\Microsoft\Windows\CurrentVersion\Uninstall`
+
 // UninstallKey is the key under HKEY_CURRENT_USER where id's entry lives.
 func UninstallKey(id string) string { return uninstallKey + `\` + id }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=2290d4b78b5ab6f81f82962342f132ddeddeb66258115f7d08686617408b31f6 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=7b06eaa5dc6eabf69fcc6fa68cbb592f41e73cbb680f7f86ab35ee50f8c7a1d6 ====

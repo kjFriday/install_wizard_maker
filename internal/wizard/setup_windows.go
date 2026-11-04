@@ -390,44 +390,4 @@ func (ui *setupUI) smoke(file string) int {
 	return ui.code
 }
 
-// LaunchTarget is what Launch on the finish page starts: the new Start-menu (or desktop) shortcut, so
-// the program gets its own taskbar identity and working folder, else the program itself.
-func (s *Setup) LaunchTarget() (file, args, dir string) {
-	if s.Choices.StartMenu {
-		return s.Places.StartMenuLink(s.M.Group, s.M.Name), "", ""
-	}
-	if s.Choices.Desktop {
-		return s.Places.DesktopLink(s.M.Name), "", ""
-	}
-	program := filepath.Join(s.Choices.Dir, filepath.FromSlash(s.M.Run.Program))
-	if s.M.Run.Program == spec.Python {
-		program = s.Python
-	}
-	vars := spec.ArgVars(s.Choices.Dir, s.M.Name, s.M.Version, s.Places.LocalAppData, s.Places.AppData)
-	var quoted []string
-	for _, a := range s.M.Run.Args {
-		x, _ := spec.Expand(a, vars)
-		quoted = append(quoted, quoteForShell(x))
-	}
-	return program, strings.Join(quoted, " "), s.Choices.Dir
-}
-
-func quoteForShell(s string) string {
-	if s == "" || strings.ContainsAny(s, " \t\"") {
-		return `"` + strings.ReplaceAll(s, `"`, `\"`) + `"`
-	}
-	return s
-}
-
-// human is a size for people.
-func human(n int64) string {
-	switch {
-	case n < 1024*1024:
-		return fmt.Sprintf("%d KB", (n+1023)/1024)
-	case n < 1024*1024*1024:
-		return fmt.Sprintf("%.1f MB", float64(n)/(1024*1024))
-	}
-	return fmt.Sprintf("%.1f GB", float64(n)/(1024*1024*1024))
-}
-
-// ==== stamp v1 | author=kjFriday | hmac-sha256=a0b95a423193ac914a1180bc7b81af2e603fa6e8ffda94e6237e30c9c34a76fc ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=1167de3d493d14304e99dce9d01b7f33d753e5f2e0768f42dafa3e314e80b3b8 ====

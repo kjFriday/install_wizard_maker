@@ -115,12 +115,15 @@ const (
 	cwUseDefault    = 0x80000000
 	swHide          = 0
 	swShow          = 5
+	swpNoSize       = 0x0001
+	swpNoMove       = 0x0002
 	swpNoZOrder     = 0x0004
 	swpNoActivate   = 0x0010
 	wmDestroy       = 0x0002
 	wmSize          = 0x0005
 	wmPaint         = 0x000F
 	wmClose         = 0x0010
+	wmQuit          = 0x0012
 	wmSetFont       = 0x0030
 	wmGetDlgCode    = 0x0087
 	wmKeyDown       = 0x0100
@@ -131,6 +134,7 @@ const (
 	wmDpiChanged    = 0x02E0
 	wmUser          = 0x0400
 	wmApp           = 0x8000
+	wmWake          = wmApp + 1 // posted by Window.Wake
 	dmGetDefID      = wmUser
 	dcHasDefID      = 0x534B
 	dlgcWantAllKeys = 0x0004
@@ -139,6 +143,7 @@ const (
 	colorWindow     = 5
 	colorBtnFace    = 15
 	colorWindowText = 8
+	colorBtnText    = 18
 )
 
 // Control styles.
@@ -152,6 +157,7 @@ const (
 	bsPushButton    = 0x0000
 	bsDefPushButton = 0x0001
 	bsAutoCheckBox  = 0x0003
+	typeMask        = 0x000F // a button's kind (BS_TYPEMASK); also a text static's (SS_TYPEMASK is 0x1F)
 	esMultiline     = 0x0004
 	esAutoVScroll   = 0x0040
 	esAutoHScroll   = 0x0080
@@ -195,6 +201,62 @@ const (
 const (
 	IDOK     = 1
 	IDCANCEL = 2
+)
+
+// Message box flags and answers.
+const (
+	MBOK           = 0x00
+	MBOKCancel     = 0x01
+	MBYesNoCancel  = 0x03
+	MBYesNo        = 0x04
+	MBRetryCancel  = 0x05
+	MBIconError    = 0x10
+	MBIconQuestion = 0x20
+	MBIconWarning  = 0x30
+	MBIconInfo     = 0x40
+	MBDefButton2   = 0x100
+	IDYES          = 6
+	IDNO           = 7
+	IDRETRY        = 4
+)
+
+// VKF5 is the F5 key, for Accel.Key (a letter or digit key is its own character, as in 'N').
+const VKF5 = 0x74
+
+// The window class, icons, fonts and system metrics (InitCommonControlsEx, LoadImage, LoadCursor,
+// GetSystemMetricsForDpi, SystemParametersInfoForDpi, MonitorFromWindow, GetClassLongPtr, LOGFONT).
+const (
+	iccWin95Classes         = 0x00FF
+	iccStandardClasses      = 0x4000
+	imageIcon               = 1
+	idcArrow                = 32512
+	smCxIcon                = 11
+	smCxSmIcon              = 49
+	smCxMenuCheck           = 71
+	spiGetNonClientMetrics  = 0x0029
+	monitorDefaultToNearest = 2
+	gclpHIcon               = ^uintptr(13) // GCLP_HICON (-14)
+	fwBold                  = 700
+)
+
+// Menus and keyboard shortcuts (AppendMenu, ACCEL).
+const (
+	mfString    = 0x0000
+	mfPopup     = 0x0010
+	mfSeparator = 0x0800
+	fVirtKey    = 0x01
+	fControl    = 0x08
+)
+
+// Painting and captures (DrawText, AlphaBlend, PrintWindow).
+const (
+	dtWordBreak         = 0x0010
+	dtSingleLine        = 0x0020
+	dtCalcRect          = 0x0400
+	dtNoPrefix          = 0x0800
+	blendSrcAlpha       = 0x01FF0000 // BLENDFUNCTION {AC_SRC_OVER, 0, 255, AC_SRC_ALPHA} as one value: per-pixel alpha
+	pwClientOnly        = 1
+	pwRenderFullContent = 2
 )
 
 type point struct{ x, y int32 }
@@ -301,4 +363,4 @@ func instance() uintptr {
 func loword(v uintptr) int { return int(uint16(v)) }
 func hiword(v uintptr) int { return int(uint16(v >> 16)) }
 
-// ==== stamp v1 | author=kjFriday | hmac-sha256=1cc940dae01d8a21b53c71b48da8e111b25ed5d0e15b51480795315469ff7b17 ====
+// ==== stamp v1 | author=kjFriday | hmac-sha256=02f019d86d7aa2ee340d182eca6e70221a39a273aa061045aaf5d2ef47bb9332 ====
